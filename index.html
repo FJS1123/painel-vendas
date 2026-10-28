@@ -14,7 +14,7 @@
         :root {
             --sj-blue: #2E3192;
             --sj-red: #ED1C24;
-            --sj-green: #4CAF50;
+            --sj-green: #375623;
             --sj-header-bg: #2E3192;
             --sj-border: #808080;
             --bg-color: #f4f6f8;
@@ -92,8 +92,8 @@
             background-color: #f2f2f2;
         }
         button:hover, .file-upload-btn:hover { background-color: #e2e2e2; }
-        .btn-success { background-color: var(--sj-blue); color: white; border-color: #1f2165; }
-        .btn-success:hover { background-color: #1f2165; }
+        .btn-success { background-color: var(--sj-green); color: white; border-color: #273e18; }
+        .btn-success:hover { background-color: #273e18; }
         .btn-danger { background-color: var(--sj-red); color: white; border-color: #bd141b; }
         .btn-danger:hover { background-color: #bd141b; }
 
@@ -139,14 +139,14 @@
         .text-right { text-align: right; }
 
         /* Status Colors */
-        .status-ativo { background-color: #2E3192; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
+        .status-ativo { background-color: var(--sj-green); color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
         .status-gestora { background-color: #595959; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
-        .status-ferias { background-color: #ED1C24; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
+        .status-ferias { background-color: var(--sj-red); color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
         .status-sem-meta { background-color: #7f7f7f; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
 
         /* Badges e Destaques */
         .bg-yellow { background-color: #ffc000; color: black; font-weight: bold; }
-        .bg-red { background-color: #ED1C24; color: white; }
+        .bg-red { background-color: var(--sj-red); color: white; font-weight: bold; }
         .bg-gray { color: #7f7f7f; font-style: italic; }
 
         .editable-input {
@@ -480,7 +480,7 @@
                 else if (progresso >= 84) progClass = "bg-yellow";
             }
 
-            let descClass = emp.desconto > 4 ? "bg-red" : "";
+            let descClass = emp.desconto >= 4 ? "bg-red" : "";
 
             let statusClass = "status-ativo";
             if (emp.status === 'Gestora') statusClass = "status-gestora";
