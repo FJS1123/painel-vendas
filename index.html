@@ -241,10 +241,16 @@
             storeMetaManual = 470000;
             saveToFirebase();
         }
+        sortData();
         renderTable();
     });
 
+    function sortData() {
+        data.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' }));
+    }
+
     function saveToFirebase() {
+        sortData();
         db.ref('painel_farmacia').set({
             funcionarios: data,
             metaLoja: storeMetaManual
@@ -303,7 +309,7 @@
             if (parsed.length > 0) {
                 data = parsed;
                 saveToFirebase();
-                alert("Planilha importada com sucesso para a nuvem!");
+                alert("Planilha importada e organizada em ordem alfabética com sucesso!");
             }
         };
         reader.readAsArrayBuffer(file);
