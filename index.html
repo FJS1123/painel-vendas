@@ -1,0 +1,453 @@
+Aqui está o código completo e atualizado do seu painel. Ele já vem com:
+
+* O botão no topo para **Atualizar via Planilha Excel** instantaneamente sempre que você baixar a nova versão da sua pasta do Drive.
+* A **Meta da Loja** totalmente editável diretamente no card do topo.
+* Os campos de funcionários, vendas, clientes, descontos, ticket médio e status (Ativo, Férias, Sem Meta) editáveis na hora.
+* O destaque automático em **amarelo ($\ge 80\%$)** e **verde ($\ge 100\%$)** no progresso.
+* Os botões de exportação rápida para **PDF** e **JPG**.
+
+Basta copiar este código, colar no seu Bloco de Notas, salvar como `index.html` e enviar para o seu repositório do GitHub para atualizar a Vercel:
+
+```html
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Vendas - Farmácia</title>
+    <!-- Bibliotecas para leitura de Excel, exportar JPG e PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #0b5ed7;
+            --success: #198754;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #212529;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            margin: 0;
+            color: #0d6efd;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        button, .file-upload-btn {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+
+        .btn-primary { background-color: #0d6efd; color: white; }
+        .btn-primary:hover { background-color: #0b5ed7; }
+        .btn-success { background-color: #198754; color: white; }
+        .btn-success:hover { background-color: #157347; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        .btn-danger:hover { background-color: #bb2d3b; }
+        .btn-secondary { background-color: #6c757d; color: white; }
+        .btn-secondary:hover { background-color: #5c636a; }
+        .btn-info { background-color: #0dcaf0; color: #000; }
+        .btn-info:hover { background-color: #31d2f2; }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        /* Store KPI Cards */
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .kpi-card {
+            background: var(--card-bg);
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-left: 5px solid #0d6efd;
+        }
+
+        .kpi-card.success { border-left-color: var(--success); }
+        .kpi-card.warning { border-left-color: var(--warning); }
+
+        .kpi-title {
+            font-size: 0.85rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .kpi-value {
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+
+        .kpi-input {
+            width: 100%;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 4px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+        }
+
+        /* Table Section */
+        .table-responsive {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            overflow-x: auto;
+            margin-bottom: 25px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        th {
+            background-color: #f1f3f5;
+            color: #495057;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* Progress Badges */
+        .badge-progress {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .bg-yellow { background-color: #fff3cd; color: #856404; }
+        .bg-green { background-color: #d1e7dd; color: #0f5132; }
+        .bg-normal { background-color: #e2e3e5; color: #383d41; }
+
+        /* Editable inputs */
+        input.editable {
+            width: 90px;
+            padding: 4px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        select.editable {
+            padding: 4px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            background: white;
+        }
+
+        .footer-note {
+            font-size: 0.8rem;
+            color: #6c757d;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="capture-area">
+    <header>
+        <div>
+            <h1>Painel de Acompanhamento - Portão</h1>
+            <span style="font-size: 0.85rem; color: #6c757d;">Atualizado com os dados da sua pasta</span>
+        </div>
+        <div class="actions" id="no-print">
+            <label class="file-upload-btn btn-info">
+                📂 Atualizar via Planilha Excel <input type="file" id="excel-file" accept=".xlsx, .xls" onchange="handleExcelImport(event)">
+            </label>
+            <button class="btn-primary" onclick="addRow()">+ Adicionar</button>
+            <button class="btn-success" onclick="exportPDF()">PDF</button>
+            <button class="btn-secondary" onclick="exportJPG()">JPG</button>
+        </div>
+    </header>
+
+    <!-- KPIs da Loja -->
+    <div class="kpi-container">
+        <div class="kpi-card">
+            <div class="kpi-title">Meta da Loja (Editável)</div>
+            <div class="kpi-value">
+                <input type="number" id="store-meta-input" class="kpi-input" value="450726" onchange="updateStoreMeta(this.value)">
+            </div>
+        </div>
+        <div class="kpi-card success">
+            <div class="kpi-title">Venda Total</div>
+            <div class="kpi-value" id="store-venda">R$ 0,00</div>
+        </div>
+        <div class="kpi-card warning">
+            <div class="kpi-title">Quanto Falta (Loja)</div>
+            <div class="kpi-value" id="store-falta">R$ 0,00</div>
+        </div>
+        <div class="kpi-card" id="store-prog-card">
+            <div class="kpi-title">Progresso da Loja</div>
+            <div class="kpi-value" id="store-prog">0.00%</div>
+        </div>
+    </div>
+
+    <!-- Tabela de Funcionários -->
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Funcionário</th>
+                    <th>Status</th>
+                    <th>Meta Individual (R$)</th>
+                    <th>Quanto Vendeu (R$)</th>
+                    <th>Quanto Falta (R$)</th>
+                    <th>Progresso (%)</th>
+                    <th>Clientes Atendidos</th>
+                    <th>Desc. Balcão (%)</th>
+                    <th>Ticket Médio (R$)</th>
+                    <th id="th-acoes">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="employee-table-body">
+                <!-- Dados carregados via JS -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="footer-note">
+    Sistema exclusivo de controle operacional de balcão - Farmácias São João
+</div>
+
+<script>
+    let storeMetaManual = 450726;
+
+    let data = [
+        { name: "CATIELE ZAIACZKOSKI", status: "Ativo", meta: 22867, venda: 31961, clientes: 301, desconto: 4.90, ticket: 106 },
+        { name: "AMANDA MOREIRA DORNELES", status: "Ativo", meta: 50000, venda: 24364, clientes: 478, desconto: 2.56, ticket: 51 },
+        { name: "CRISTIANE DOS SANTOS KIRSCH", status: "Ativo", meta: 85000, venda: 55654, clientes: 755, desconto: 3.70, ticket: 74 },
+        { name: "EMILY VITORIA BORBA DOS REIS", status: "Ativo", meta: 45000, venda: 29723, clientes: 703, desconto: 0.85, ticket: 42 },
+        { name: "KÁSSIA RAFAELLA MOUTINHO", status: "Ativo", meta: 85000, venda: 60023, clientes: 831, desconto: 3.99, ticket: 72 },
+        { name: "SILMAR SARTOR DOS PASSOS", status: "Sem Meta", meta: 0, venda: 4415, clientes: 58, desconto: 3.97, ticket: 76 },
+        { name: "STEFANY SOUZA SARMENTO", status: "Ativo", meta: 50000, venda: 25998, clientes: 647, desconto: 0.75, ticket: 40 },
+        { name: "GILBERTO AFONSO DIEDER", status: "Ativo", meta: 35000, venda: 31992, clientes: 447, desconto: 5.98, ticket: 72 },
+        { name: "ARIANE LOURENCO CUTHI", status: "Ativo", meta: 22040, venda: 17998, clientes: 212, desconto: 4.35, ticket: 85 },
+        { name: "ROSANE DE FATIMA MOREIRA", status: "Ativo", meta: 50000, venda: 30707, clientes: 563, desconto: 3.16, ticket: 55 },
+        { name: "LEONARDO KRAUSE", status: "Ativo", meta: 85000, venda: 55955, clientes: 704, desconto: 3.60, ticket: 79 }
+    ];
+
+    function formatMoney(val) {
+        return "R$ " + val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function updateStoreMeta(val) {
+        storeMetaManual = parseFloat(val) || 0;
+        renderTable();
+    }
+
+    function handleExcelImport(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const dataBytes = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(dataBytes, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                let parsedData = [];
+                for (let i = 1; i < json.length; i++) {
+                    let row = json[i];
+                    let nomeFunc = row[2] || row[1];
+                    if (nomeFunc && typeof nomeFunc === 'string' && !nomeFunc.includes("PORTAO")) {
+                        let vendaVal = parseFloat(String(row[4] || 0).replace(/[^\d,.-]/g, '').replace(',', '.')) || 0;
+                        let metaVal = parseFloat(String(row[5] || 0).replace(/[^\d,.-]/g, '').replace(',', '.')) || 0;
+                        let descVal = parseFloat(String(row[7] || 0).replace(/[^\d,.-]/g, '').replace(',', '.')) || 0;
+                        let tktVal = parseFloat(String(row[8] || 0).replace(/[^\d,.-]/g, '').replace(',', '.')) || 0;
+                        let cliVal = parseInt(String(row[11] || 0).replace(/[^\d]/g, '')) || 0;
+
+                        parsedData.push({
+                            name: nomeFunc.trim(),
+                            status: metaVal === 0 ? "Sem Meta" : "Ativo",
+                            meta: metaVal,
+                            venda: vendaVal,
+                            clientes: cliVal,
+                            desconto: descVal,
+                            ticket: tktVal
+                        });
+                    }
+                }
+
+                if (parsedData.length > 0) {
+                    data = parsedData;
+                    alert("Planilha atualizada com sucesso!");
+                    renderTable();
+                } else {
+                    alert("Não foi possível ler os registros automaticamente.");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Erro ao processar o arquivo Excel.");
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById("employee-table-body");
+        tbody.innerHTML = "";
+
+        let totalVendaLoja = 0;
+
+        data.forEach((emp, index) => {
+            let metaVal = emp.status === 'Férias' || emp.status === 'Sem Meta' ? 0 : emp.meta;
+            totalVendaLoja += emp.venda;
+
+            let falta = metaVal > 0 ? Math.max(0, metaVal - emp.venda) : 0;
+            let progresso = metaVal > 0 ? (emp.venda / metaVal) * 100 : 0;
+
+            let badgeClass = "badge-progress bg-normal";
+            if (metaVal > 0) {
+                if (progresso >= 100) {
+                    badgeClass = "badge-progress bg-green";
+                } else if (progresso >= 80) {
+                    badgeClass = "badge-progress bg-yellow";
+                }
+            }
+
+            let row = document.createElement("tr");
+            row.innerHTML = `
+                <td><input type="text" class="editable" value="${emp.name}" onchange="updateData(${index}, 'name', this.value)" style="width: 180px;"></td>
+                <td>
+                    <select class="editable" onchange="updateData(${index}, 'status', this.value)">
+                        <option value="Ativo" ${emp.status === 'Ativo' ? 'selected' : ''}>Ativo</option>
+                        <option value="Férias" ${emp.status === 'Férias' ? 'selected' : ''}>Férias</option>
+                        <option value="Sem Meta" ${emp.status === 'Sem Meta' ? 'selected' : ''}>Sem Meta</option>
+                    </select>
+                </td>
+                <td><input type="number" class="editable" value="${emp.meta}" onchange="updateData(${index}, 'meta', parseFloat(this.value))"></td>
+                <td><input type="number" class="editable" value="${emp.venda}" onchange="updateData(${index}, 'venda', parseFloat(this.value))"></td>
+                <td>${metaVal > 0 ? formatMoney(falta) : 'N/A'}</td>
+                <td><span class="${badgeClass}">${progresso.toFixed(2)}%</span></td>
+                <td><input type="number" class="editable" value="${emp.clientes}" onchange="updateData(${index}, 'clientes', parseInt(this.value))" style="width: 70px;"></td>
+                <td><input type="number" step="0.01" class="editable" value="${emp.desconto}" onchange="updateData(${index}, 'desconto', parseFloat(this.value))" style="width: 70px;">%</td>
+                <td><input type="number" step="0.01" class="editable" value="${emp.ticket}" onchange="updateData(${index}, 'ticket', parseFloat(this.value))" style="width: 70px;"></td>
+                <td><button class="btn-danger" style="padding: 4px 8px; font-size: 0.8rem;" onclick="removeRow(${index})">Excluir</button></td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        let faltaLoja = Math.max(0, storeMetaManual - totalVendaLoja);
+        let progLoja = storeMetaManual > 0 ? (totalVendaLoja / storeMetaManual) * 100 : 0;
+
+        document.getElementById("store-venda").innerText = formatMoney(totalVendaLoja);
+        document.getElementById("store-falta").innerText = formatMoney(faltaLoja);
+        document.getElementById("store-prog").innerText = progLoja.toFixed(2) + "%";
+
+        let storeCard = document.getElementById("store-prog-card");
+        storeCard.className = "kpi-card " + (progLoja >= 100 ? "success" : (progLoja >= 80 ? "warning" : ""));
+    }
+
+    function updateData(index, field, value) {
+        data[index][field] = value;
+        renderTable();
+    }
+
+    function addRow() {
+        data.push({ name: "NOVO FUNCIONÁRIO", status: "Ativo", meta: 30000, venda: 0, clientes: 0, desconto: 0.0, ticket: 0 });
+        renderTable();
+    }
+
+    function removeRow(index) {
+        if(confirm("Deseja realmente remover este funcionário?")) {
+            data.splice(index, 1);
+            renderTable();
+        }
+    }
+
+    function exportJPG() {
+        const noPrint = document.getElementById("no-print");
+        noPrint.style.display = "none";
+        html2canvas(document.getElementById("capture-area"), { scale: 2 }).then(canvas => {
+            noPrint.style.display = "flex";
+            let link = document.createElement('a');
+            link.download = 'painel-vendas-farmacia.jpg';
+            link.href = canvas.toDataURL('image/jpeg', 0.9);
+            link.click();
+        });
+    }
+
+    function exportPDF() {
+        const noPrint = document.getElementById("no-print");
+        noPrint.style.display = "none";
+        html2canvas(document.getElementById("capture-area"), { scale: 2 }).then(canvas => {
+            noPrint.style.display = "flex";
+            const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('landscape', 'mm', 'a4');
+            const imgWidth = 280;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            let position = 10;
+
+            pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+            pdf.save('painel-vendas-farmacia.pdf');
+        });
+    }
+
+    window.onload = renderTable;
+</script>
+
+</body>
+</html>
+
+```
