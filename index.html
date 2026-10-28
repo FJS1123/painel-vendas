@@ -231,7 +231,6 @@
     let data = [];
 
     const defaultData = [
-        { name: "1123", status: "Ativo", meta: 450726, venda: 368791, clientes: 5699, desconto: 3.57, ticket: 65 },
         { name: "AMANDA MOREIRA DORNELES", status: "Ativo", meta: 50000, venda: 24364, clientes: 478, desconto: 2.56, ticket: 51 },
         { name: "ARIANE LOURENCO CUTHI", status: "Sem Meta", meta: 22040, venda: 17998, clientes: 212, desconto: 4.35, ticket: 85 },
         { name: "CATIELE ZAIACZKOSKI", status: "Sem Meta", meta: 22867, venda: 31961, clientes: 301, desconto: 4.90, ticket: 106 },
@@ -352,7 +351,10 @@
                 
                 if (nome && typeof nome === 'string') {
                     nome = nome.trim();
-                    if (nome.includes("PORTAO") || nome.includes("Total") || nome.includes("COLABORADOR") || nome === "") {
+                    let upperName = nome.toUpperCase();
+                    
+                    // Ignora linhas da loja (como 1123, PORTAO) ou totais
+                    if (upperName.includes("PORTAO") || upperName.includes("TOTAL") || upperName.includes("COLABORADOR") || upperName.startsWith("1123") || upperName === "") {
                         continue;
                     }
 
@@ -361,7 +363,7 @@
                     let ticketVal = cleanNumber(row[8]);
                     let clientesVal = parseInt(row[11]) || 0;
 
-                    importedMap.set(nome.toUpperCase(), {
+                    importedMap.set(upperName, {
                         venda: vendaVal,
                         clientes: clientesVal,
                         desconto: descVal,
@@ -401,7 +403,7 @@
 
             if (updatedCount > 0) {
                 saveToFirebase();
-                alert("Planilha importada com sucesso! Metas individuais e status foram preservados.");
+                alert("Planilha importada com sucesso! A linha da loja foi ignorada e os status/metas foram preservados.");
             } else {
                 alert("Nenhum colaborador correspondente foi encontrado na planilha.");
             }
@@ -528,3 +530,5 @@
 </html>
 
 ```
+
+Basta substituir no seu `index.html` e atualizar o repositório!
