@@ -63,7 +63,8 @@
         .brand-area {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 15px;
+            flex-wrap: wrap;
         }
 
         /* Título do painel editável */
@@ -85,6 +86,17 @@
             border-color: var(--sj-blue);
             background: #ffffff;
             outline: none;
+        }
+
+        /* Estilo do indicador de meta diária ao lado do título */
+        .daily-goal-badge {
+            background-color: #e0e7ff;
+            color: var(--sj-blue);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border: 1px solid #c7d2fe;
         }
 
         .actions {
@@ -224,9 +236,13 @@
         <div class="brand-area">
             <!-- Título do painel -->
             <input type="text" id="titulo-painel" class="editable-title" value="METAS - OUTUBRO" onchange="updateTitle(this.value)">
+            <!-- Indicador dinâmico de quanto falta vender por dia (Seg a Dom) -->
+            <div id="meta-diaria-container" class="daily-goal-badge">
+                📅 Meta Diária: R$ 0,00 / dia
+            </div>
         </div>
         <div class="actions" id="no-print">
-            <!-- Botão para alternar entre Modo Edição e Modo Fixo/Visualização -->
+            <!-- Botão para alternar entre Modo Edição e Modo Fixo -->
             <button id="btn-mode-toggle" class="btn-mode" onclick="toggleEditMode()">🔒 Modo Fixo (Visualização)</button>
             <label class="file-upload-btn edit-only">
                 📂 Importar Excel <input type="file" id="excel-file" accept=".xlsx, .xls" onchange="handleExcelImport(event)">
@@ -317,7 +333,7 @@
     let storeMetaManual = 450726;
     let panelTitle = "METAS - OUTUBRO";
     let data = [];
-    let isEditMode = false; // Começa por padrão em Modo Fixo (Ideal para visualização limpa e exportação)
+    let isEditMode = false; // Começa em modo fixo para visualização limpa e exportação perfeita
 
     const defaultData = [
         { name: "AMANDA MOREIRA DORNELES", status: "Ativo", meta: 50000, venda: 24364, clientes: 478, desconto: 2.56, ticket: 51 },
@@ -382,7 +398,7 @@
     }
 
     /* ==========================================
-       FUNÇÕES DE FORMATAÇÃO E DADOS
+       FUNÇÕES DE CÁLCULO E FORMATAÇÃO
        ========================================== */
     function updateTitle(val) {
         panelTitle = val;
@@ -519,12 +535,11 @@
     }
 
     /* ==========================================
-       RENDERIZAÇÃO DA TABELA (AJUSTADA PARA OS DOIS MODOS)
+       RENDERIZAÇÃO DA TABELA E CÁLCULO DA META DIÁRIA
        ========================================== */
     function renderTable() {
         document.getElementById("titulo-painel").value = panelTitle;
         
-        // Renderiza Meta da Loja conforme o modo (Editável vs Fixo)
         const metaLojaContainer = document.getElementById("store-meta-container");
         if (isEditMode) {
             metaLojaContainer.innerHTML = `<input type="number" id="store-meta" class="editable-input text-right" value="${storeMetaManual}" onchange="updateStoreMeta(this.value)">`;
@@ -533,7 +548,6 @@
             metaLojaContainer.className = "text-right";
         }
 
-        // Mostra ou oculta botões de ações/importação conforme o modo
         document.querySelectorAll('.edit-only').forEach(el => {
             el.style.display = isEditMode ? '' : 'none';
         });
@@ -578,7 +592,6 @@
             else if (emp.status === 'Férias') statusClass = "status-ferias";
             else if (emp.status === 'Sem Meta') statusClass = "status-sem-meta";
 
-            // Monta as colunas dinamicamente dependendo se está em Modo Edição ou Modo Fixo
             let colName = isEditMode 
                 ? `<input type="text" class="editable-input text-left" value="${emp.name}" onchange="updateData(${index}, 'name', this.value)">`
                 : `<span class="text-left" style="display:block;">${emp.name}</span>`;
@@ -620,14 +633,17 @@
             tbody.appendChild(row);
         });
 
-        // Oculta ou mostra coluna de Ações no cabeçalho
-        document.getElementById("th-acoes").style.display = isEditMode ? '' : 'none';
-
-        // Totais da loja
+        // Totais e cálculos gerais da loja
         let faltaLoja = Math.max(0, storeMetaManual - totalVendaLoja);
         let progLoja = storeMetaManual > 0 ? (totalVendaLoja / storeMetaManual) * 100 : 0;
         let mediaDesc = countAtivos > 0 ? somaDesc / countAtivos : 0;
         let mediaTicket = countAtivos > 0 ? somaTicket / countAtivos : 0;
+
+        // Cálculo da Meta Diária (Considerando 31 dias no mês - Outubro, funcionando de Seg a Dom)
+        // Pega o que falta para a meta da loja e divide pelos dias restantes (ou total de dias do mês, aqui usamos 31 dias do mês cheio como referência)
+        let diasTotalMes = 31; 
+        let metaDiariaNecessaria = faltaLoja > 0 ? (faltaLoja / diasTotalMes) : 0;
+        document.getElementById("meta-diaria-container").innerText = `📅 Falta Média: ${formatMoney(metaDiariaNecessaria)} / dia`;
 
         document.getElementById("store-realizado").innerText = formatMoney(totalVendaLoja);
         document.getElementById("store-falta").innerText = formatMoney(faltaLoja);
@@ -652,12 +668,12 @@
     }
 
     /* ==========================================
-       EXPORTAÇÃO PERFEITA PARA JPG E PDF
+       EXPORTAÇÃO PARA JPG E PDF
        ========================================== */
     function exportJPG() {
         const wasEditing = isEditMode;
         if (wasEditing) {
-            isEditMode = false; // Garante que exporta em modo fixo sem caixas de input
+            isEditMode = false;
             renderTable();
         }
 
