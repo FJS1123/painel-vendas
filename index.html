@@ -158,7 +158,7 @@
             </thead>
             <tbody>
                 <tr style="font-weight: bold; background: #ffffff;">
-                    <td><input type="number" id="store-meta" class="editable-input text-right" value="470000" onchange="updateStoreMeta(this.value)"></td>
+                    <td><input type="text" id="store-meta" class="editable-input text-right" value="R$ 470.000,00" onfocus="unformatStoreMeta(this)" onblur="formatStoreMetaInput(this)" onchange="updateStoreMeta(this.value)"></td>
                     <td id="store-realizado" class="text-right">R$ 0,00</td>
                     <td id="store-falta" class="text-right">R$ 0,00</td>
                     <td id="store-prog">0,00%</td>
@@ -260,13 +260,38 @@
         return "R$ " + (val || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
+    function formatStoreMetaInput(input) {
+        let val = parseFloat(input.value.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+        storeMetaManual = val;
+        input.value = formatMoney(val);
+        saveToFirebase();
+    }
+
+    function unformatStoreMeta(input) {
+        input.value = storeMetaManual;
+    }
+
     function updateStoreMeta(val) {
-        storeMetaManual = parseFloat(val) || 0;
+        let cleanVal = parseFloat(val.toString().replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+        storeMetaManual = cleanVal;
         saveToFirebase();
     }
 
     function updateData(index, field, value) {
+        if (field === 'meta') {
+            value = parseFloat(value.toString().replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+        }
         data[index][field] = value;
+        saveToFirebase();
+    }
+
+    function unformatMetaInput(input, index) {
+        input.value = data[index].meta;
+    }
+
+    function formatMetaInput(input, index) {
+        let val = parseFloat(input.value.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+        data[index].meta = val;
         saveToFirebase();
     }
 
@@ -315,7 +340,7 @@
     }
 
     function renderTable() {
-        document.getElementById("store-meta").value = storeMetaManual;
+        document.getElementById("store-meta").value = formatMoney(storeMetaManual);
         const tbody = document.getElementById("employee-table-body");
         tbody.innerHTML = "";
 
@@ -362,7 +387,7 @@
                         <option value="Sem Meta" ${emp.status === 'Sem Meta' ? 'selected' : ''}>Sem Meta</option>
                     </select>
                 </td>
-                <td><input type="number" class="editable-input text-right" value="${emp.meta}" onchange="updateData(${index}, 'meta', parseFloat(this.value))"></td>
+                <td><input type="text" class="editable-input text-right" value="${formatMoney(emp.meta)}" onfocus="unformatMetaInput(this, ${index})" onblur="formatMetaInput(this, ${index})" onchange="updateData(${index}, 'meta', this.value)"></td>
                 <td class="text-right">${formatMoney(emp.venda)}</td>
                 <td class="text-right">${faltaText}</td>
                 <td class="${progClass}">${progresso.toFixed(2)}%</td>
@@ -433,4 +458,4 @@
 
 ```
 
-Basta atualizar o seu arquivo `index.html` e subir para o GitHub!
+Basta substituir o código no seu `index.html`, subir para o GitHub e a Vercel atualizará o painel com as metas formatadas em **R$** perfeitamente!
