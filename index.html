@@ -106,10 +106,11 @@
         .text-left { text-align: left; }
         .text-right { text-align: right; }
 
-        /* Status Colors (Igual a imagem) */
+        /* Status Colors */
         .status-ativo { background-color: #375623; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
         .status-gestora { background-color: #595959; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
         .status-ferias { background-color: #c00000; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
+        .status-sem-meta { background-color: #7f7f7f; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
 
         /* Badges e Destaques */
         .bg-yellow { background-color: #ffc000; color: black; font-weight: bold; }
@@ -124,6 +125,7 @@
             font-size: 0.85rem;
         }
         .editable-input.text-left { text-align: left; }
+        .editable-input.text-right { text-align: right; }
     </style>
 </head>
 <body>
@@ -156,12 +158,12 @@
             </thead>
             <tbody>
                 <tr style="font-weight: bold; background: #ffffff;">
-                    <td><input type="number" id="store-meta" class="editable-input" value="470000" onchange="updateStoreMeta(this.value)"></td>
-                    <td id="store-realizado">R$ 0,00</td>
-                    <td id="store-falta">R$ 0,00</td>
+                    <td><input type="number" id="store-meta" class="editable-input text-right" value="470000" onchange="updateStoreMeta(this.value)"></td>
+                    <td id="store-realizado" class="text-right">R$ 0,00</td>
+                    <td id="store-falta" class="text-right">R$ 0,00</td>
                     <td id="store-prog">0,00%</td>
                     <td id="store-desc">0,00%</td>
-                    <td id="store-ticket">R$ 0,00</td>
+                    <td id="store-ticket" class="text-right">R$ 0,00</td>
                 </tr>
             </tbody>
         </table>
@@ -197,7 +199,6 @@
 </div>
 
 <script>
-    // Configuração oficial do Firebase obtida do projeto
     const firebaseConfig = {
         apiKey: "AIzaSyDBCSa--ECyj7Q1nFw8yVgBZFS-9qE3is",
         authDomain: "fsj-planilha.firebaseapp.com",
@@ -209,7 +210,6 @@
         measurementId: "G-XT2XZ3MZVW"
     };
 
-    // Inicializar Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
@@ -230,7 +230,6 @@
         { name: "Stefany", status: "Ativo", meta: 50000, venda: 25998, clientes: 647, desconto: 0.75, ticket: 40.18 }
     ];
 
-    // Sincronizar dados em tempo real com o Firebase
     db.ref('painel_farmacia').on('value', (snapshot) => {
         const val = snapshot.val();
         if (val) {
@@ -309,7 +308,7 @@
             if (parsed.length > 0) {
                 data = parsed;
                 saveToFirebase();
-                alert("Planilha importada e organizada em ordem alfabética com sucesso!");
+                alert("Planilha importada e organizada com sucesso!");
             }
         };
         reader.readAsArrayBuffer(file);
@@ -327,7 +326,7 @@
         let countAtivos = 0;
 
         data.forEach((emp, index) => {
-            let metaVal = emp.status === 'Férias' || emp.status === 'Gestora' ? 0 : emp.meta;
+            let metaVal = (emp.status === 'Férias' || emp.status === 'Gestora' || emp.status === 'Sem Meta') ? 0 : emp.meta;
             totalVendaLoja += emp.venda;
             totalClientes += emp.clientes;
             somaDesc += emp.desconto;
@@ -347,14 +346,20 @@
 
             let descClass = emp.desconto > 4 ? "bg-red" : "";
 
+            let statusClass = "status-ativo";
+            if (emp.status === 'Gestora') statusClass = "status-gestora";
+            else if (emp.status === 'Férias') statusClass = "status-ferias";
+            else if (emp.status === 'Sem Meta') statusClass = "status-sem-meta";
+
             let row = document.createElement("tr");
             row.innerHTML = `
                 <td class="text-left"><input type="text" class="editable-input text-left" value="${emp.name}" onchange="updateData(${index}, 'name', this.value)"></td>
                 <td>
-                    <select class="${emp.status === 'Ativo' ? 'status-ativo' : (emp.status === 'Gestora' ? 'status-gestora' : 'status-ferias')}" onchange="updateData(${index}, 'status', this.value)">
+                    <select class="${statusClass}" onchange="updateData(${index}, 'status', this.value)">
                         <option value="Ativo" ${emp.status === 'Ativo' ? 'selected' : ''}>Ativo</option>
                         <option value="Gestora" ${emp.status === 'Gestora' ? 'selected' : ''}>Gestora</option>
                         <option value="Férias" ${emp.status === 'Férias' ? 'selected' : ''}>Férias</option>
+                        <option value="Sem Meta" ${emp.status === 'Sem Meta' ? 'selected' : ''}>Sem Meta</option>
                     </select>
                 </td>
                 <td><input type="number" class="editable-input text-right" value="${emp.meta}" onchange="updateData(${index}, 'meta', parseFloat(this.value))"></td>
@@ -427,3 +432,5 @@
 </html>
 
 ```
+
+Basta atualizar o seu arquivo `index.html` e subir para o GitHub!
