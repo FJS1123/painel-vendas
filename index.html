@@ -4,7 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Metas - Farmácia</title>
-    <!-- Carregamento das bibliotecas externas (Firebase, SheetJS para Excel, html2canvas e jsPDF para exportação) -->
+    
+    <!-- ==========================================
+       IMPORTAÇÃO DE BIBLIOTECAS EXTERNAS
+       - Firebase: Banco de dados em tempo real
+       - SheetJS (XLSX): Leitura e parsing de arquivos Excel
+       - html2canvas & jsPDF: Motores para exportação de imagem/PDF
+       ========================================== -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -13,8 +19,9 @@
     
     <style>
         /* ==========================================
-           1. VARIÁVEIS DE CORES E CONFIGURAÇÕES GLOBAIS
-           ================================---------- */
+           VARIÁVEIS DE CORES E CONFIGURAÇÕES GLOBAIS
+           Definição da identidade visual (cores padrão da rede)
+           ========================================== */
         :root {
             --sj-blue: #2E3192;
             --sj-red: #ED1C24;
@@ -33,8 +40,8 @@
         }
 
         /* ==========================================
-           2. ESTILOS DO CONTAINER PRINCIPAL E CABEÇALHO
-           ================================---------- */
+           ESTILOS DO CONTAINER PRINCIPAL E CABEÇALHO
+           ========================================== */
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -60,7 +67,7 @@
             gap: 12px;
         }
 
-        /* Título editável do painel */
+        /* Título do painel que pode ser editado diretamente na tela */
         .editable-title {
             color: var(--sj-blue);
             font-size: 1.5rem;
@@ -87,7 +94,7 @@
             flex-wrap: wrap;
         }
 
-        /* Botões de ação (Importar, Adicionar, Exportar) */
+        /* Botões de controle (Importar, Adicionar linha, Exportar) */
         button, .file-upload-btn {
             padding: 7px 14px;
             border: 1px solid #7f7f7f;
@@ -107,8 +114,8 @@
         input[type="file"] { display: none; }
 
         /* ==========================================
-           3. ESTILOS DE TABELAS E COMPONENTES
-           ================================---------- */
+           ESTILOS DO RESUMO DA LOJA E TABELAS
+           ========================================== */
         .store-summary-box {
             margin-bottom: 20px;
             background: #f8fafc;
@@ -149,7 +156,7 @@
             background-color: #fcfcfc;
         }
 
-        /* Larguras fixas para melhor visualização */
+        /* Definição de larguras específicas para colunas essenciais */
         th:first-child, td:first-child {
             width: 290px;
             min-width: 290px;
@@ -161,19 +168,19 @@
         .text-left { text-align: left; }
         .text-right { text-align: right; }
 
-        /* Cores dos Status dos Funcionários */
-        .status-ativo { background-color: var(--sj-green); color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
-        .status-gestora { background-color: #595959; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
-        .status-ferias { background-color: var(--sj-red); color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
-        .status-sem-meta { background-color: #7f7f7f; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
+        /* Cores aplicadas aos selects de Status de cada colaborador */
+        .status-ativo { background-color: var(--sj-green); color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; display: inline-block; text-align: center; }
+        .status-gestora { background-color: #595959; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; display: inline-block; text-align: center; }
+        .status-ferias { background-color: var(--sj-red); color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; display: inline-block; text-align: center; }
+        .status-sem-meta { background-color: #7f7f7f; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; display: inline-block; text-align: center; }
 
-        /* Classes de Destaques Condicionais (Metas e Descontos) */
+        /* Classes condicionais de destaque visual */
         .bg-yellow { background-color: #ffc000; color: black; font-weight: bold; }
         .bg-green { background-color: var(--sj-green); color: white; font-weight: bold; }
         .bg-red { background-color: var(--sj-red); color: white; font-weight: bold; }
         .bg-gray { color: #7f7f7f; font-style: italic; }
 
-        /* Inputs editáveis na tabela */
+        /* Campos editáveis dentro das linhas da tabela */
         .editable-input {
             width: 96%;
             padding: 5px;
@@ -205,11 +212,11 @@
 <div class="container" id="capture-area">
     <header>
         <div class="brand-area">
-            <!-- Campo do Título Editável -->
+            <!-- Título do painel interativo -->
             <input type="text" id="titulo-painel" class="editable-title" value="METAS - OUTUBRO" onchange="updateTitle(this.value)">
         </div>
         <div class="actions" id="no-print">
-            <!-- Botão de Importação Excel -->
+            <!-- Botão com input oculto para carregar o arquivo Excel da rede -->
             <label class="file-upload-btn">
                 📂 Importar Excel <input type="file" id="excel-file" accept=".xlsx, .xls" onchange="handleExcelImport(event)">
             </label>
@@ -219,7 +226,7 @@
         </div>
     </header>
 
-    <!-- Tabela de Resumo Geral da Loja -->
+    <!-- Bloco com os indicadores consolidados da Loja -->
     <div class="store-summary-box">
         <table>
             <thead>
@@ -245,7 +252,7 @@
         </table>
     </div>
 
-    <!-- Tabela Principal de Funcionários -->
+    <!-- Tabela individual de desempenho dos funcionários -->
     <div class="table-responsive">
         <table>
             <thead>
@@ -263,11 +270,11 @@
                 </tr>
             </thead>
             <tbody id="employee-table-body">
-                <!-- Preenchido dinamicamente via JavaScript -->
+                <!-- Conteúdo gerado dinamicamente via JavaScript -->
             </tbody>
             <tfoot>
                 <tr style="font-weight: bold; background-color: #e2e8f0;" id="table-total">
-                    <!-- Linha de Totais da Tabela -->
+                    <!-- Linha somatória total -->
                 </tr>
             </tfoot>
         </table>
@@ -280,8 +287,8 @@
 
 <script>
     /* ==========================================
-       4. CONFIGURAÇÃO E CONEXÃO COM O FIREBASE
-       ================================---------- */
+       CONEXÃO COM O FIREBASE (Realtime Database)
+       ========================================== */
     const firebaseConfig = {
         apiKey: "AIzaSyDBCSa--ECyj7Q1nFw8yVgBZFS-9qE3is",
         authDomain: "fsj-planilha.firebaseapp.com",
@@ -300,7 +307,7 @@
     let panelTitle = "METAS - OUTUBRO";
     let data = [];
 
-    // Dados padrão iniciais (caso o banco esteja vazio)
+    // Lista padrão de funcionários caso o banco online esteja vazio
     const defaultData = [
         { name: "AMANDA MOREIRA DORNELES", status: "Ativo", meta: 50000, venda: 24364, clientes: 478, desconto: 2.56, ticket: 51 },
         { name: "ARIANE LOURENCO CUTHI", status: "Ativo", meta: 22040, venda: 17998, clientes: 212, desconto: 4.35, ticket: 85 },
@@ -316,8 +323,9 @@
     ];
 
     /* ==========================================
-       5. SINCRONIZAÇÃO EM TEMPO REAL (FIREBASE)
-       ================================---------- */
+       SINCRONIZAÇÃO EM TEMPO REAL
+       Ouve alterações no banco de dados e atualiza a tela automaticamente
+       ========================================== */
     db.ref('painel_farmacia').on('value', (snapshot) => {
         const val = snapshot.val();
         if (val) {
@@ -334,12 +342,12 @@
         renderTable();
     });
 
-    // Ordena os funcionários em ordem alfabética por nome
+    // Ordena alfabeticamente por nome do colaborador (considerando acentuação pt-BR)
     function sortData() {
         data.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' }));
     }
 
-    // Salva o estado atual no Realtime Database
+    // Salva todas as alterações estruturais no Firebase
     function saveToFirebase() {
         sortData();
         db.ref('painel_farmacia').set({
@@ -350,7 +358,7 @@
     }
 
     /* ==========================================
-       6. FUNÇÕES AUXILIARES E FORMATAÇÕES
+       FUNÇÕES DE FORMATAÇÃO E MANIPULAÇÃO DE DADOS
        ================================---------- */
     function updateTitle(val) {
         panelTitle = val;
@@ -408,8 +416,9 @@
     }
 
     /* ==========================================
-       7. IMPORTAÇÃO E PROCESSAMENTO DE EXCEL
-       ================================---------- */
+       IMPORTAÇÃO INTELIGENTE DE EXCEL
+       Lê o arquivo, ignora linhas gerais (como loja/total) e atualiza métricas
+       ========================================== */
     function handleExcelImport(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -421,7 +430,6 @@
             
             let importedMap = new Map();
 
-            // Varre o arquivo ignorando linhas de cabeçalho e da loja
             for (let i = 1; i < json.length; i++) {
                 let row = json[i];
                 let nome = row[2] || row[0];
@@ -430,6 +438,7 @@
                     nome = nome.trim();
                     let upperName = nome.toUpperCase();
                     
+                    // Filtra linhas indesejadas do relatório original da rede
                     if (upperName.includes("PORTAO") || upperName.includes("TOTAL") || upperName.includes("COLABORADOR") || upperName.startsWith("1123") || upperName === "") {
                         continue;
                     }
@@ -449,7 +458,7 @@
             }
 
             let updatedCount = 0;
-            // Atualiza funcionários existentes mantendo status/metas manuais
+            // Atualiza funcionários já cadastrados preservando seus status manuais
             data.forEach(emp => {
                 let key = emp.name.toUpperCase();
                 if (importedMap.has(key)) {
@@ -462,7 +471,7 @@
                 }
             });
 
-            // Insere novos colaboradores encontrados no relatório
+            // Adiciona novos colaboradores que venham na planilha
             importedMap.forEach((imp, nameKey) => {
                 let exists = data.some(emp => emp.name.toUpperCase() === nameKey);
                 if (!exists) {
@@ -490,8 +499,9 @@
     }
 
     /* ==========================================
-       8. RENDERIZAÇÃO DA TABELA E CÁLCULOS TOTAIS
-       ================================---------- */
+       RENDERIZAÇÃO DA TABELA E REGRAS CONDICIONAIS
+       Calcula progressos, cores de meta (verde/amarelo) e descontos (vermelho)
+       ========================================== */
     function renderTable() {
         document.getElementById("titulo-painel").value = panelTitle;
         document.getElementById("store-meta").value = storeMetaManual;
@@ -504,7 +514,6 @@
         let somaTicket = 0;
         let countAtivos = 0;
 
-        // Processa cada colaborador e aplica regras visuais de meta e desconto
         data.forEach((emp, index) => {
             let metaVal = (emp.status === 'Férias' || emp.status === 'Gestora' || emp.status === 'Sem Meta') ? 0 : emp.meta;
             totalVendaLoja += emp.venda;
@@ -522,14 +531,14 @@
 
             if (metaVal > 0) {
                 if (progresso >= 100) {
-                    progClass = "bg-green";   // Verde quando bate 100% ou mais
+                    progClass = "bg-green";   // Fica verde quando atinge 100% ou mais
                     faltaClass = "bg-green";
                 } else if (progresso >= 84) {
-                    progClass = "bg-yellow";  // Amarelo quando está perto
+                    progClass = "bg-yellow";  // Fica amarelo quando está próximo
                 }
             }
 
-            // Vermelho se o desconto for 0.04% ou superior
+            // Destaca em vermelho se o desconto de balcão for 0,04% ou superior
             let descClass = Math.round(emp.desconto * 100) >= 4 ? "bg-red" : "";
 
             let statusClass = "status-ativo";
@@ -560,7 +569,7 @@
             tbody.appendChild(row);
         });
 
-        // Cálculo do resumo geral da loja
+        // Totais e médias consolidadas da loja
         let faltaLoja = Math.max(0, storeMetaManual - totalVendaLoja);
         let progLoja = storeMetaManual > 0 ? (totalVendaLoja / storeMetaManual) * 100 : 0;
         let mediaDesc = countAtivos > 0 ? somaDesc / countAtivos : 0;
@@ -572,7 +581,7 @@
         document.getElementById("store-desc").innerText = mediaDesc.toFixed(2) + "%";
         document.getElementById("store-ticket").innerText = formatMoney(mediaTicket);
 
-        // Preenche a linha de rodapé com os totais somados
+        // Preenche a linha de rodapé com os totais gerais
         const tfoot = document.getElementById("table-total");
         tfoot.innerHTML = `
             <td class="text-left">Total</td>
@@ -580,7 +589,7 @@
             <td class="text-right">${formatMoney(data.reduce((acc, curr) => acc + (curr.status==='Ativo'?curr.meta:0), 0))}</td>
             <td class="text-right">${formatMoney(totalVendaLoja)}</td>
             <td class="text-right">${formatMoney(Math.max(0, storeMetaManual - totalVendaLoja))}</td>
-            <td>${progLoja.toFixed(2)}%</td>
+            <td>${progLoja.toFixed(2)%}</td>
             <td>${totalClientes}</td>
             <td>${mediaDesc.toFixed(2)}%</td>
             <td class="text-right" style="white-space: nowrap;">${formatMoney(mediaTicket)}</td>
@@ -589,32 +598,81 @@
     }
 
     /* ==========================================
-       9. FUNÇÕES DE EXPORTAÇÃO (JPG / PDF)
-       ================================---------- */
+       TRATAMENTO PARA EXPORTAÇÃO LIMPA (JPG / PDF)
+       Substitui temporariamente inputs/selects por textos estáticos para evitar bugs visuais
+       ========================================== */
+    function prepareForCapture(container) {
+        container.querySelectorAll('input, select').forEach(el => {
+            let span = document.createElement('span');
+            span.className = 'temp-capture-span';
+            if (el.tagName === 'SELECT') {
+                span.innerText = el.options[el.selectedIndex].text;
+                span.className = el.className;
+                span.style.padding = "4px";
+                span.style.borderRadius = "3px";
+                span.style.display = "inline-block";
+            } else {
+                span.innerText = el.value;
+                span.style.fontWeight = "inherit";
+            }
+            el.style.display = 'none';
+            el.parentNode.insertBefore(span, el);
+        });
+    }
+
+    function restoreAfterCapture(container) {
+        container.querySelectorAll('.temp-capture-span').forEach(span => {
+            span.nextElementSibling.style.display = '';
+            span.remove();
+        });
+    }
+
     function exportJPG() {
+        const captureArea = document.getElementById("capture-area");
         document.getElementById("no-print").style.display = "none";
         document.querySelectorAll("button.btn-danger").forEach(el => el.style.display = "none");
-        html2canvas(document.getElementById("capture-area"), { scale: 2 }).then(canvas => {
+        
+        prepareForCapture(captureArea);
+
+        html2canvas(captureArea, { scale: 2, useCORS: true }).then(canvas => {
+            restoreAfterCapture(captureArea);
             document.getElementById("no-print").style.display = "flex";
             document.querySelectorAll("button.btn-danger").forEach(el => el.style.display = "inline-block");
+            
             let link = document.createElement('a');
             link.download = 'controle-metas.jpg';
-            link.href = canvas.toDataURL('image/jpeg', 0.9);
+            link.href = canvas.toDataURL('image/jpeg', 0.95);
             link.click();
+        }).catch(err => {
+            restoreAfterCapture(captureArea);
+            document.getElementById("no-print").style.display = "flex";
+            document.querySelectorAll("button.btn-danger").forEach(el => el.style.display = "inline-block");
+            console.error(err);
         });
     }
 
     function exportPDF() {
+        const captureArea = document.getElementById("capture-area");
         document.getElementById("no-print").style.display = "none";
         document.querySelectorAll("button.btn-danger").forEach(el => el.style.display = "none");
-        html2canvas(document.getElementById("capture-area"), { scale: 2 }).then(canvas => {
+        
+        prepareForCapture(captureArea);
+
+        html2canvas(captureArea, { scale: 2, useCORS: true }).then(canvas => {
+            restoreAfterCapture(captureArea);
             document.getElementById("no-print").style.display = "flex";
             document.querySelectorAll("button.btn-danger").forEach(el => el.style.display = "inline-block");
+            
             const imgData = canvas.toDataURL('image/png');
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF('landscape', 'mm', 'a4');
             pdf.addImage(imgData, 'PNG', 10, 10, 280, (canvas.height * 280) / canvas.width);
             pdf.save('controle-metas.pdf');
+        }).catch(err => {
+            restoreAfterCapture(captureArea);
+            document.getElementById("no-print").style.display = "flex";
+            document.querySelectorAll("button.btn-danger").forEach(el => el.style.display = "inline-block");
+            console.error(err);
         });
     }
 </script>
