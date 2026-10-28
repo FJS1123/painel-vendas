@@ -365,12 +365,12 @@
                     </select>
                 </td>
                 <td><input type="number" class="editable" value="${emp.meta}" onchange="updateData(${index}, 'meta', parseFloat(this.value))"></td>
-                <td><input type="number" class="editable" value="${emp.venda}" onchange="updateData(${index}, 'venda', parseFloat(this.value))"></td>
+                <td>${formatMoney(emp.venda)}</td>
                 <td>${metaVal > 0 ? formatMoney(falta) : 'N/A'}</td>
                 <td><span class="${badgeClass}">${progresso.toFixed(2)}%</span></td>
-                <td><input type="number" class="editable" value="${emp.clientes}" onchange="updateData(${index}, 'clientes', parseInt(this.value))" style="width: 70px;"></td>
-                <td><input type="number" step="0.01" class="editable" value="${emp.desconto}" onchange="updateData(${index}, 'desconto', parseFloat(this.value))" style="width: 70px;">%</td>
-                <td><input type="number" step="0.01" class="editable" value="${emp.ticket}" onchange="updateData(${index}, 'ticket', parseFloat(this.value))" style="width: 70px;"></td>
+                <td>${emp.clientes}</td>
+                <td>${emp.desconto.toFixed(2)}%</td>
+                <td>${formatMoney(emp.ticket)}</td>
                 <td><button class="btn-danger" style="padding: 4px 8px; font-size: 0.8rem;" onclick="removeRow(${index})">Excluir</button></td>
             `;
             tbody.appendChild(row);
