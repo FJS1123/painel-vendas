@@ -12,8 +12,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
-            --sj-green: #375623;
-            --sj-header-bg: #385723;
+            --sj-blue: #2E3192;
+            --sj-red: #ED1C24;
+            --sj-green: #4CAF50;
+            --sj-header-bg: #2E3192;
             --sj-border: #808080;
             --bg-color: #f4f6f8;
         }
@@ -45,7 +47,7 @@
         }
 
         .editable-title {
-            color: var(--sj-green);
+            color: var(--sj-blue);
             font-size: 1.4rem;
             font-weight: bold;
             border: 1px dashed transparent;
@@ -58,7 +60,7 @@
             background: #fdfdfd;
         }
         .editable-title:focus {
-            border-color: var(--sj-green);
+            border-color: var(--sj-blue);
             background: #ffffff;
             outline: none;
         }
@@ -79,10 +81,10 @@
             background-color: #f2f2f2;
         }
         button:hover, .file-upload-btn:hover { background-color: #e2e2e2; }
-        .btn-success { background-color: #375623; color: white; border-color: #273e18; }
-        .btn-success:hover { background-color: #273e18; }
-        .btn-danger { background-color: #c00000; color: white; border-color: #900; }
-        .btn-danger:hover { background-color: #900; }
+        .btn-success { background-color: var(--sj-blue); color: white; border-color: #1f2165; }
+        .btn-success:hover { background-color: #1f2165; }
+        .btn-danger { background-color: var(--sj-red); color: white; border-color: #bd141b; }
+        .btn-danger:hover { background-color: #bd141b; }
 
         input[type="file"] { display: none; }
 
@@ -120,14 +122,14 @@
         .text-right { text-align: right; }
 
         /* Status Colors */
-        .status-ativo { background-color: #375623; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
+        .status-ativo { background-color: #2E3192; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
         .status-gestora { background-color: #595959; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
-        .status-ferias { background-color: #c00000; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
+        .status-ferias { background-color: #ED1C24; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
         .status-sem-meta { background-color: #7f7f7f; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
 
         /* Badges e Destaques */
         .bg-yellow { background-color: #ffc000; color: black; font-weight: bold; }
-        .bg-red { background-color: #ff0000; color: white; }
+        .bg-red { background-color: #ED1C24; color: white; }
         .bg-gray { color: #7f7f7f; font-style: italic; }
 
         .editable-input {
@@ -139,20 +141,29 @@
         }
         .editable-input.text-left { text-align: left; }
         .editable-input.text-right { text-align: right; }
+
+        /* Rodapé */
+        footer {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.8rem;
+            color: #666;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
 <div class="container" id="capture-area">
     <header>
-        <input type="text" id="titulo-painel" class="editable-title" value="Controle de Metas - OUTUBRO" onchange="updateTitle(this.value)">
+        <input type="text" id="titulo-painel" class="editable-title" value="METAS - OUTUBRO" onchange="updateTitle(this.value)">
         <div class="actions" id="no-print">
             <label class="file-upload-btn">
                 📂 Importar Excel <input type="file" id="excel-file" accept=".xlsx, .xls" onchange="handleExcelImport(event)">
             </label>
             <button onclick="addRow()">+ Adicionar</button>
             <button class="btn-success" onclick="exportPDF()">Exportar PDF</button>
-            <button onclick="exportJPG()">Exportar JPG</button>
+            <button class="btn-danger" onclick="exportJPG()">Exportar JPG</button>
         </div>
     </header>
 
@@ -209,6 +220,10 @@
             </tfoot>
         </table>
     </div>
+
+    <footer>
+        Desenvolvido por Nick Oliver - 2026
+    </footer>
 </div>
 
 <script>
@@ -227,7 +242,7 @@
     const db = firebase.database();
 
     let storeMetaManual = 470000;
-    let panelTitle = "Controle de Metas - OUTUBRO";
+    let panelTitle = "METAS - OUTUBRO";
     let data = [];
 
     const defaultData = [
@@ -249,11 +264,11 @@
         if (val) {
             data = val.funcionarios || defaultData;
             storeMetaManual = val.metaLoja !== undefined ? val.metaLoja : 470000;
-            panelTitle = val.titulo || "Controle de Metas - OUTUBRO";
+            panelTitle = val.titulo || "METAS - OUTUBRO";
         } else {
             data = defaultData;
             storeMetaManual = 470000;
-            panelTitle = "Controle de Metas - OUTUBRO";
+            panelTitle = "METAS - OUTUBRO";
             saveToFirebase();
         }
         sortData();
@@ -353,7 +368,6 @@
                     nome = nome.trim();
                     let upperName = nome.toUpperCase();
                     
-                    // Ignora linhas da loja (como 1123, PORTAO) ou totais
                     if (upperName.includes("PORTAO") || upperName.includes("TOTAL") || upperName.includes("COLABORADOR") || upperName.startsWith("1123") || upperName === "") {
                         continue;
                     }
