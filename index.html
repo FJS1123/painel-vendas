@@ -94,7 +94,6 @@
 
         input[type="file"] { display: none; }
 
-        /* Tabela Estilo Excel / Planilha Original */
         .table-responsive {
             overflow-x: auto;
         }
@@ -123,13 +122,11 @@
             background-color: #f9f9f9;
         }
 
-        /* Coluna Colaborador mais larga para caber nomes completos */
         th:first-child, td:first-child {
             width: 280px;
             min-width: 280px;
         }
 
-        /* Alinhamentos */
         .text-left { text-align: left; }
         .text-right { text-align: right; }
 
@@ -141,6 +138,7 @@
 
         /* Badges e Destaques */
         .bg-yellow { background-color: #ffc000; color: black; font-weight: bold; }
+        .bg-green { background-color: var(--sj-green); color: white; font-weight: bold; }
         .bg-red { background-color: var(--sj-red); color: white; font-weight: bold; }
         .bg-gray { color: #7f7f7f; font-style: italic; }
 
@@ -158,7 +156,6 @@
         }
         .editable-input.text-right { text-align: right; }
 
-        /* Rodapé */
         footer {
             text-align: center;
             margin-top: 15px;
@@ -467,11 +464,16 @@
             let progresso = metaVal > 0 ? (emp.venda / metaVal) * 100 : 0;
 
             let progClass = "";
+            let faltaClass = "";
             let faltaText = metaVal > 0 ? formatMoney(falta) : '<span class="bg-gray">R$ 0,00</span>';
 
             if (metaVal > 0) {
-                if (progresso >= 100) progClass = "";
-                else if (progresso >= 84) progClass = "bg-yellow";
+                if (progresso >= 100) {
+                    progClass = "bg-green";
+                    faltaClass = "bg-green";
+                } else if (progresso >= 84) {
+                    progClass = "bg-yellow";
+                }
             }
 
             let descClass = Math.round(emp.desconto * 100) >= 4 ? "bg-red" : "";
@@ -494,7 +496,7 @@
                 </td>
                 <td><input type="text" class="editable-input text-right" value="${formatMoney(emp.meta)}" onfocus="unformatMetaInput(this, ${index})" onblur="formatMetaInput(this, ${index})" onchange="updateData(${index}, 'meta', this.value)"></td>
                 <td><input type="text" class="editable-input text-right" value="${formatMoney(emp.venda)}" onfocus="unformatVendaInput(this, ${index})" onblur="formatVendaInput(this, ${index})" onchange="updateData(${index}, 'venda', this.value)"></td>
-                <td class="text-right">${faltaText}</td>
+                <td class="text-right ${faltaClass}">${faltaText}</td>
                 <td class="${progClass}">${progresso.toFixed(2)}%</td>
                 <td>${emp.clientes}</td>
                 <td class="${descClass}">${emp.desconto.toFixed(2)}%</td>
