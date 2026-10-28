@@ -16,7 +16,7 @@
             --sj-red: #ED1C24;
             --sj-green: #375623;
             --sj-header-bg: #2E3192;
-            --sj-border: #808080;
+            --sj-border: #b0b0b0;
             --bg-color: #f4f6f8;
         }
 
@@ -32,16 +32,17 @@
             max-width: 1400px;
             margin: 0 auto;
             background: #ffffff;
-            padding: 15px;
-            border: 1px solid #ccc;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
 
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             flex-wrap: wrap;
             gap: 10px;
         }
@@ -54,12 +55,13 @@
 
         .editable-title {
             color: var(--sj-blue);
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             font-weight: bold;
             border: 1px dashed transparent;
-            padding: 2px 6px;
+            padding: 2px 8px;
             background: transparent;
             width: auto;
+            border-radius: 4px;
         }
         .editable-title:hover {
             border-color: #a6a6a6;
@@ -78,13 +80,14 @@
         }
 
         button, .file-upload-btn {
-            padding: 6px 12px;
+            padding: 7px 14px;
             border: 1px solid #7f7f7f;
-            border-radius: 3px;
+            border-radius: 4px;
             font-weight: bold;
             cursor: pointer;
             font-size: 0.85rem;
             background-color: #f2f2f2;
+            transition: background 0.2s;
         }
         button:hover, .file-upload-btn:hover { background-color: #e2e2e2; }
         .btn-success { background-color: var(--sj-green); color: white; border-color: #273e18; }
@@ -94,8 +97,21 @@
 
         input[type="file"] { display: none; }
 
+        /* Bloco de Resumo da Loja */
+        .store-summary-box {
+            margin-bottom: 20px;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 2px;
+            overflow: hidden;
+        }
+
+        /* Tabelas */
         .table-responsive {
             overflow-x: auto;
+            border-radius: 6px;
+            border: 1px solid var(--sj-border);
         }
 
         table {
@@ -106,8 +122,8 @@
         }
 
         th, td {
-            border: 1px solid #a6a6a6;
-            padding: 6px 8px;
+            border: 1px solid var(--sj-border);
+            padding: 8px 10px;
         }
 
         th {
@@ -116,17 +132,23 @@
             font-weight: bold;
             text-transform: uppercase;
             font-size: 0.75rem;
+            letter-spacing: 0.5px;
         }
 
         tr:nth-child(even) {
-            background-color: #f9f9f9;
+            background-color: #fcfcfc;
         }
 
+        /* Larguras otimizadas */
         th:first-child, td:first-child {
-            width: 280px;
-            min-width: 280px;
+            width: 290px;
+            min-width: 290px;
+        }
+        th:nth-last-child(2), td:nth-last-child(2) {
+            min-width: 95px; /* Coluna Ticket mais larga para evitar quebra */
         }
 
+        /* Alinhamentos */
         .text-left { text-align: left; }
         .text-right { text-align: right; }
 
@@ -144,10 +166,17 @@
 
         .editable-input {
             width: 96%;
-            padding: 4px;
-            border: 1px solid #ccc;
+            padding: 5px;
+            border: 1px solid #cbd5e1;
+            border-radius: 3px;
             text-align: center;
             font-size: 0.85rem;
+            background: #fff;
+        }
+        .editable-input:focus {
+            border-color: var(--sj-blue);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(46, 49, 146, 0.1);
         }
         .editable-input.text-left { 
             text-align: left; 
@@ -158,9 +187,9 @@
 
         footer {
             text-align: center;
-            margin-top: 15px;
+            margin-top: 20px;
             font-size: 0.8rem;
-            color: #666;
+            color: #64748b;
             font-weight: bold;
         }
     </style>
@@ -183,7 +212,7 @@
     </header>
 
     <!-- Tabela de Resumo da Loja -->
-    <div style="margin-bottom: 15px;">
+    <div class="store-summary-box">
         <table>
             <thead>
                 <tr>
@@ -229,7 +258,7 @@
                 <!-- Preenchido via JS -->
             </tbody>
             <tfoot>
-                <tr style="font-weight: bold; background-color: #d9d9d9;" id="table-total">
+                <tr style="font-weight: bold; background-color: #e2e8f0;" id="table-total">
                     <!-- Totais -->
                 </tr>
             </tfoot>
@@ -500,7 +529,7 @@
                 <td class="${progClass}">${progresso.toFixed(2)}%</td>
                 <td>${emp.clientes}</td>
                 <td class="${descClass}">${emp.desconto.toFixed(2)}%</td>
-                <td class="text-right">${formatMoney(emp.ticket)}</td>
+                <td class="text-right" style="white-space: nowrap;">${formatMoney(emp.ticket)}</td>
                 <td><button class="btn-danger" style="padding: 2px 6px; font-size: 0.75rem;" onclick="removeRow(${index})">X</button></td>
             `;
             tbody.appendChild(row);
@@ -527,7 +556,7 @@
             <td>${progLoja.toFixed(2)}%</td>
             <td>${totalClientes}</td>
             <td>${mediaDesc.toFixed(2)}%</td>
-            <td class="text-right">${formatMoney(mediaTicket)}</td>
+            <td class="text-right" style="white-space: nowrap;">${formatMoney(mediaTicket)}</td>
             <td>-</td>
         `;
     }
