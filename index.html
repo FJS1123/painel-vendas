@@ -295,6 +295,16 @@
         saveToFirebase();
     }
 
+    function unformatVendaInput(input, index) {
+        input.value = data[index].venda;
+    }
+
+    function formatVendaInput(input, index) {
+        let val = parseFloat(input.value.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+        data[index].venda = val;
+        saveToFirebase();
+    }
+
     function addRow() {
         data.push({ name: "NOVO", status: "Ativo", meta: 30000, venda: 0, clientes: 0, desconto: 0.0, ticket: 0 });
         saveToFirebase();
@@ -307,42 +317,42 @@
         }
     }
 
+    function cleanNumber(val) {
+        if (typeof val === 'number') return val;
+        if (!val) return 0;
+        let str = val.toString().replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.');
+        return parseFloat(str) || 0;
+    }
+
     function handleExcelImport(e) {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
         reader.onload = function(e) {
             const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-            const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
             let parsed = [];
+            
             for (let i = 1; i < json.length; i++) {
                 let row = json[i];
-                let nome = row[2] || row[1] || row[0];
-                if (nome && typeof nome === 'string' && !nome.includes("PORTAO") && !nome.includes("Total") && !nome.includes("COLABORADOR")) {
-                    // Varredura flexível nas colunas da linha para encontrar valores numéricos válidos
-                    let vendaVal = 0;
-                    let metaVal = 30000;
-                    let clientesVal = 0;
-                    let descVal = 0;
-                    let ticketVal = 0;
-
-                    // Tenta mapear as colunas comuns do relatório corporativo
-                    for (let c = 3; c < row.length; c++) {
-                        let val = parseFloat(row[c]) || 0;
-                        if (val > 1000 && vendaVal === 0) {
-                            vendaVal = val; // Geralmente o Realizado é um valor alto
-                        }
+                let nome = row[2] || row[0];
+                
+                if (nome && typeof nome === 'string') {
+                    nome = nome.trim();
+                    // Ignora linhas de cabeçalho da loja ou totais gerais
+                    if (nome.includes("PORTAO") || nome.includes("Total") || nome.includes("COLABORADOR") || nome === "") {
+                        continue;
                     }
-                    
-                    // Fallback para posições exatas caso encontre na estrutura padrão
-                    if (row[4] !== undefined) vendaVal = parseFloat(row[4]) || 0;
-                    if (row[5] !== undefined) metaVal = parseFloat(row[5]) || 30000;
-                    if (row[7] !== undefined) descVal = parseFloat(row[7]) || 0;
-                    if (row[8] !== undefined) ticketVal = parseFloat(row[8]) || 0;
-                    if (row[11] !== undefined) clientesVal = parseInt(row[11]) || 0;
+
+                    let vendaVal = cleanNumber(row[4]);
+                    let metaVal = cleanNumber(row[5]);
+                    let descVal = cleanNumber(row[7]);
+                    let ticketVal = cleanNumber(row[8]);
+                    let clientesVal = parseInt(row[11]) || 0;
 
                     parsed.push({
-                        name: nome.trim(),
+                        name: nome,
                         status: "Ativo",
                         meta: metaVal > 0 ? metaVal : 30000,
                         venda: vendaVal,
@@ -352,12 +362,13 @@
                     });
                 }
             }
+
             if (parsed.length > 0) {
                 data = parsed;
                 saveToFirebase();
-                alert("Planilha importada e organizada com sucesso!");
+                alert("Planilha importada, organizada em ordem alfabética e atualizada com sucesso!");
             } else {
-                alert("Não foi possível ler os dados corretamente. Verifique o formato do arquivo.");
+                alert("Não foi possível ler os dados do arquivo. Verifique se o formato está correto.");
             }
         };
         reader.readAsArrayBuffer(file);
@@ -412,7 +423,7 @@
                     </select>
                 </td>
                 <td><input type="text" class="editable-input text-right" value="${formatMoney(emp.meta)}" onfocus="unformatMetaInput(this, ${index})" onblur="formatMetaInput(this, ${index})" onchange="updateData(${index}, 'meta', this.value)"></td>
-                <td><input type="text" class="editable-input text-right" value="${formatMoney(emp.venda)}" onchange="updateData(${index}, 'venda', this.value)"></td>
+                <td><input type="text" class="editable-input text-right" value="${formatMoney(emp.venda)}" onfocus="unformatVendaInput(this, ${index})" onblur="formatVendaInput(this, ${index})" onchange="updateData(${index}, 'venda', this.value)"></td>
                 <td class="text-right">${faltaText}</td>
                 <td class="${progClass}">${progresso.toFixed(2)}%</td>
                 <td>${emp.clientes}</td>
