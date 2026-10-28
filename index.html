@@ -20,7 +20,7 @@
     <style>
         /* ==========================================
            VARIÁVEIS DE CORES E CONFIGURAÇÕES GLOBAIS
-           Definição da identidade visual (cores padrão da rede)
+           Definição da identidade visual
            ========================================== */
         :root {
             --sj-blue: #2E3192;
@@ -67,7 +67,7 @@
             gap: 12px;
         }
 
-        /* Título do painel que pode ser editado diretamente na tela */
+        /* Título do painel editável diretamente na tela */
         .editable-title {
             color: var(--sj-blue);
             font-size: 1.5rem;
@@ -94,7 +94,7 @@
             flex-wrap: wrap;
         }
 
-        /* Botões de controle (Importar, Adicionar linha, Exportar) */
+        /* Botões de controle */
         button, .file-upload-btn {
             padding: 7px 14px;
             border: 1px solid #7f7f7f;
@@ -156,7 +156,7 @@
             background-color: #fcfcfc;
         }
 
-        /* Definição de larguras específicas para colunas essenciais */
+        /* Larguras específicas para colunas essenciais */
         th:first-child, td:first-child {
             width: 290px;
             min-width: 290px;
@@ -216,7 +216,7 @@
             <input type="text" id="titulo-painel" class="editable-title" value="METAS - OUTUBRO" onchange="updateTitle(this.value)">
         </div>
         <div class="actions" id="no-print">
-            <!-- Botão com input oculto para carregar o arquivo Excel da rede -->
+            <!-- Botão com input oculto para carregar o arquivo Excel -->
             <label class="file-upload-btn">
                 📂 Importar Excel <input type="file" id="excel-file" accept=".xlsx, .xls" onchange="handleExcelImport(event)">
             </label>
@@ -342,7 +342,7 @@
         renderTable();
     });
 
-    // Ordena alfabeticamente por nome do colaborador (considerando acentuação pt-BR)
+    // Ordena alfabeticamente por nome do colaborador
     function sortData() {
         data.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' }));
     }
@@ -359,7 +359,7 @@
 
     /* ==========================================
        FUNÇÕES DE FORMATAÇÃO E MANIPULAÇÃO DE DADOS
-       ================================---------- */
+       ========================================== */
     function updateTitle(val) {
         panelTitle = val;
         saveToFirebase();
@@ -417,7 +417,7 @@
 
     /* ==========================================
        IMPORTAÇÃO INTELIGENTE DE EXCEL
-       Lê o arquivo, ignora linhas gerais (como loja/total) e atualiza métricas
+       Lê o arquivo, ignora linhas gerais e atualiza métricas
        ========================================== */
     function handleExcelImport(e) {
         const file = e.target.files[0];
@@ -438,7 +438,6 @@
                     nome = nome.trim();
                     let upperName = nome.toUpperCase();
                     
-                    // Filtra linhas indesejadas do relatório original da rede
                     if (upperName.includes("PORTAO") || upperName.includes("TOTAL") || upperName.includes("COLABORADOR") || upperName.startsWith("1123") || upperName === "") {
                         continue;
                     }
@@ -458,7 +457,6 @@
             }
 
             let updatedCount = 0;
-            // Atualiza funcionários já cadastrados preservando seus status manuais
             data.forEach(emp => {
                 let key = emp.name.toUpperCase();
                 if (importedMap.has(key)) {
@@ -471,7 +469,6 @@
                 }
             });
 
-            // Adiciona novos colaboradores que venham na planilha
             importedMap.forEach((imp, nameKey) => {
                 let exists = data.some(emp => emp.name.toUpperCase() === nameKey);
                 if (!exists) {
@@ -500,7 +497,6 @@
 
     /* ==========================================
        RENDERIZAÇÃO DA TABELA E REGRAS CONDICIONAIS
-       Calcula progressos, cores de meta (verde/amarelo) e descontos (vermelho)
        ========================================== */
     function renderTable() {
         document.getElementById("titulo-painel").value = panelTitle;
@@ -531,14 +527,13 @@
 
             if (metaVal > 0) {
                 if (progresso >= 100) {
-                    progClass = "bg-green";   // Fica verde quando atinge 100% ou mais
+                    progClass = "bg-green";
                     faltaClass = "bg-green";
                 } else if (progresso >= 84) {
-                    progClass = "bg-yellow";  // Fica amarelo quando está próximo
+                    progClass = "bg-yellow";
                 }
             }
 
-            // Destaca em vermelho se o desconto de balcão for 0,04% ou superior
             let descClass = Math.round(emp.desconto * 100) >= 4 ? "bg-red" : "";
 
             let statusClass = "status-ativo";
@@ -569,7 +564,6 @@
             tbody.appendChild(row);
         });
 
-        // Totais e médias consolidadas da loja
         let faltaLoja = Math.max(0, storeMetaManual - totalVendaLoja);
         let progLoja = storeMetaManual > 0 ? (totalVendaLoja / storeMetaManual) * 100 : 0;
         let mediaDesc = countAtivos > 0 ? somaDesc / countAtivos : 0;
@@ -581,7 +575,7 @@
         document.getElementById("store-desc").innerText = mediaDesc.toFixed(2) + "%";
         document.getElementById("store-ticket").innerText = formatMoney(mediaTicket);
 
-        // Preenche a linha de rodapé com os totais gerais
+        // Preenche a linha de rodapé com os totais gerais (Corrigido o erro de sintaxe do percentual)
         const tfoot = document.getElementById("table-total");
         tfoot.innerHTML = `
             <td class="text-left">Total</td>
@@ -589,7 +583,7 @@
             <td class="text-right">${formatMoney(data.reduce((acc, curr) => acc + (curr.status==='Ativo'?curr.meta:0), 0))}</td>
             <td class="text-right">${formatMoney(totalVendaLoja)}</td>
             <td class="text-right">${formatMoney(Math.max(0, storeMetaManual - totalVendaLoja))}</td>
-            <td>${progLoja.toFixed(2)%}</td>
+            <td>${progLoja.toFixed(2)}%</td>
             <td>${totalClientes}</td>
             <td>${mediaDesc.toFixed(2)}%</td>
             <td class="text-right" style="white-space: nowrap;">${formatMoney(mediaTicket)}</td>
@@ -599,7 +593,6 @@
 
     /* ==========================================
        TRATAMENTO PARA EXPORTAÇÃO LIMPA (JPG / PDF)
-       Substitui temporariamente inputs/selects por textos estáticos para evitar bugs visuais
        ========================================== */
     function prepareForCapture(container) {
         container.querySelectorAll('input, select').forEach(el => {
