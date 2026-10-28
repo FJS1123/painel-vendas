@@ -46,6 +46,17 @@
             gap: 10px;
         }
 
+        .brand-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            height: 45px;
+            object-fit: contain;
+        }
+
         .editable-title {
             color: var(--sj-blue);
             font-size: 1.4rem;
@@ -156,7 +167,10 @@
 
 <div class="container" id="capture-area">
     <header>
-        <input type="text" id="titulo-painel" class="editable-title" value="METAS - OUTUBRO" onchange="updateTitle(this.value)">
+        <div class="brand-area">
+            <img src="https://i.ibb.co/3mN9J2b/logo-sao-joao.png" alt="Logo São João" class="brand-logo" onerror="this.style.display='none'">
+            <input type="text" id="titulo-painel" class="editable-title" value="METAS - OUTUBRO" onchange="updateTitle(this.value)">
+        </div>
         <div class="actions" id="no-print">
             <label class="file-upload-btn">
                 📂 Importar Excel <input type="file" id="excel-file" accept=".xlsx, .xls" onchange="handleExcelImport(event)">
