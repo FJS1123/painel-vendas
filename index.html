@@ -4,13 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Metas - Farmácia</title>
-    <!-- Bibliotecas Firebase, SheetJS, html2canvas e jsPDF -->
+    <!-- Carregamento das bibliotecas externas (Firebase, SheetJS para Excel, html2canvas e jsPDF para exportação) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
     <style>
+        /* ==========================================
+           1. VARIÁVEIS DE CORES E CONFIGURAÇÕES GLOBAIS
+           ================================---------- */
         :root {
             --sj-blue: #2E3192;
             --sj-red: #ED1C24;
@@ -28,6 +32,9 @@
             padding: 15px;
         }
 
+        /* ==========================================
+           2. ESTILOS DO CONTAINER PRINCIPAL E CABEÇALHO
+           ================================---------- */
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -53,6 +60,7 @@
             gap: 12px;
         }
 
+        /* Título editável do painel */
         .editable-title {
             color: var(--sj-blue);
             font-size: 1.5rem;
@@ -79,6 +87,7 @@
             flex-wrap: wrap;
         }
 
+        /* Botões de ação (Importar, Adicionar, Exportar) */
         button, .file-upload-btn {
             padding: 7px 14px;
             border: 1px solid #7f7f7f;
@@ -97,7 +106,9 @@
 
         input[type="file"] { display: none; }
 
-        /* Bloco de Resumo da Loja */
+        /* ==========================================
+           3. ESTILOS DE TABELAS E COMPONENTES
+           ================================---------- */
         .store-summary-box {
             margin-bottom: 20px;
             background: #f8fafc;
@@ -107,7 +118,6 @@
             overflow: hidden;
         }
 
-        /* Tabelas */
         .table-responsive {
             overflow-x: auto;
             border-radius: 6px;
@@ -139,31 +149,31 @@
             background-color: #fcfcfc;
         }
 
-        /* Larguras otimizadas */
+        /* Larguras fixas para melhor visualização */
         th:first-child, td:first-child {
             width: 290px;
             min-width: 290px;
         }
         th:nth-last-child(2), td:nth-last-child(2) {
-            min-width: 95px; /* Coluna Ticket mais larga para evitar quebra */
+            min-width: 95px;
         }
 
-        /* Alinhamentos */
         .text-left { text-align: left; }
         .text-right { text-align: right; }
 
-        /* Status Colors */
+        /* Cores dos Status dos Funcionários */
         .status-ativo { background-color: var(--sj-green); color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
         .status-gestora { background-color: #595959; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
         .status-ferias { background-color: var(--sj-red); color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
         .status-sem-meta { background-color: #7f7f7f; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
 
-        /* Badges e Destaques */
+        /* Classes de Destaques Condicionais (Metas e Descontos) */
         .bg-yellow { background-color: #ffc000; color: black; font-weight: bold; }
         .bg-green { background-color: var(--sj-green); color: white; font-weight: bold; }
         .bg-red { background-color: var(--sj-red); color: white; font-weight: bold; }
         .bg-gray { color: #7f7f7f; font-style: italic; }
 
+        /* Inputs editáveis na tabela */
         .editable-input {
             width: 96%;
             padding: 5px;
@@ -178,11 +188,7 @@
             outline: none;
             box-shadow: 0 0 0 2px rgba(46, 49, 146, 0.1);
         }
-        .editable-input.text-left { 
-            text-align: left; 
-            width: 98%;
-            box-sizing: border-box;
-        }
+        .editable-input.text-left { text-align: left; width: 98%; box-sizing: border-box; }
         .editable-input.text-right { text-align: right; }
 
         footer {
@@ -199,9 +205,11 @@
 <div class="container" id="capture-area">
     <header>
         <div class="brand-area">
+            <!-- Campo do Título Editável -->
             <input type="text" id="titulo-painel" class="editable-title" value="METAS - OUTUBRO" onchange="updateTitle(this.value)">
         </div>
         <div class="actions" id="no-print">
+            <!-- Botão de Importação Excel -->
             <label class="file-upload-btn">
                 📂 Importar Excel <input type="file" id="excel-file" accept=".xlsx, .xls" onchange="handleExcelImport(event)">
             </label>
@@ -211,7 +219,7 @@
         </div>
     </header>
 
-    <!-- Tabela de Resumo da Loja -->
+    <!-- Tabela de Resumo Geral da Loja -->
     <div class="store-summary-box">
         <table>
             <thead>
@@ -237,7 +245,7 @@
         </table>
     </div>
 
-    <!-- Tabela de Funcionários -->
+    <!-- Tabela Principal de Funcionários -->
     <div class="table-responsive">
         <table>
             <thead>
@@ -255,11 +263,11 @@
                 </tr>
             </thead>
             <tbody id="employee-table-body">
-                <!-- Preenchido via JS -->
+                <!-- Preenchido dinamicamente via JavaScript -->
             </tbody>
             <tfoot>
                 <tr style="font-weight: bold; background-color: #e2e8f0;" id="table-total">
-                    <!-- Totais -->
+                    <!-- Linha de Totais da Tabela -->
                 </tr>
             </tfoot>
         </table>
@@ -271,6 +279,9 @@
 </div>
 
 <script>
+    /* ==========================================
+       4. CONFIGURAÇÃO E CONEXÃO COM O FIREBASE
+       ================================---------- */
     const firebaseConfig = {
         apiKey: "AIzaSyDBCSa--ECyj7Q1nFw8yVgBZFS-9qE3is",
         authDomain: "fsj-planilha.firebaseapp.com",
@@ -289,6 +300,7 @@
     let panelTitle = "METAS - OUTUBRO";
     let data = [];
 
+    // Dados padrão iniciais (caso o banco esteja vazio)
     const defaultData = [
         { name: "AMANDA MOREIRA DORNELES", status: "Ativo", meta: 50000, venda: 24364, clientes: 478, desconto: 2.56, ticket: 51 },
         { name: "ARIANE LOURENCO CUTHI", status: "Ativo", meta: 22040, venda: 17998, clientes: 212, desconto: 4.35, ticket: 85 },
@@ -303,6 +315,9 @@
         { name: "STEFANY SOUZA SARMENTO", status: "Ativo", meta: 50000, venda: 25998, clientes: 647, desconto: 0.75, ticket: 40 }
     ];
 
+    /* ==========================================
+       5. SINCRONIZAÇÃO EM TEMPO REAL (FIREBASE)
+       ================================---------- */
     db.ref('painel_farmacia').on('value', (snapshot) => {
         const val = snapshot.val();
         if (val) {
@@ -319,10 +334,12 @@
         renderTable();
     });
 
+    // Ordena os funcionários em ordem alfabética por nome
     function sortData() {
         data.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' }));
     }
 
+    // Salva o estado atual no Realtime Database
     function saveToFirebase() {
         sortData();
         db.ref('painel_farmacia').set({
@@ -332,6 +349,9 @@
         });
     }
 
+    /* ==========================================
+       6. FUNÇÕES AUXILIARES E FORMATAÇÕES
+       ================================---------- */
     function updateTitle(val) {
         panelTitle = val;
         saveToFirebase();
@@ -354,20 +374,14 @@
         saveToFirebase();
     }
 
-    function unformatMetaInput(input, index) {
-        input.value = data[index].meta;
-    }
-
+    function unformatMetaInput(input, index) { input.value = data[index].meta; }
     function formatMetaInput(input, index) {
         let val = parseFloat(input.value.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
         data[index].meta = val;
         saveToFirebase();
     }
 
-    function unformatVendaInput(input, index) {
-        input.value = data[index].venda;
-    }
-
+    function unformatVendaInput(input, index) { input.value = data[index].venda; }
     function formatVendaInput(input, index) {
         let val = parseFloat(input.value.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
         data[index].venda = val;
@@ -393,6 +407,9 @@
         return parseFloat(str) || 0;
     }
 
+    /* ==========================================
+       7. IMPORTAÇÃO E PROCESSAMENTO DE EXCEL
+       ================================---------- */
     function handleExcelImport(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -404,6 +421,7 @@
             
             let importedMap = new Map();
 
+            // Varre o arquivo ignorando linhas de cabeçalho e da loja
             for (let i = 1; i < json.length; i++) {
                 let row = json[i];
                 let nome = row[2] || row[0];
@@ -431,6 +449,7 @@
             }
 
             let updatedCount = 0;
+            // Atualiza funcionários existentes mantendo status/metas manuais
             data.forEach(emp => {
                 let key = emp.name.toUpperCase();
                 if (importedMap.has(key)) {
@@ -443,6 +462,7 @@
                 }
             });
 
+            // Insere novos colaboradores encontrados no relatório
             importedMap.forEach((imp, nameKey) => {
                 let exists = data.some(emp => emp.name.toUpperCase() === nameKey);
                 if (!exists) {
@@ -469,6 +489,9 @@
         reader.readAsArrayBuffer(file);
     }
 
+    /* ==========================================
+       8. RENDERIZAÇÃO DA TABELA E CÁLCULOS TOTAIS
+       ================================---------- */
     function renderTable() {
         document.getElementById("titulo-painel").value = panelTitle;
         document.getElementById("store-meta").value = storeMetaManual;
@@ -481,6 +504,7 @@
         let somaTicket = 0;
         let countAtivos = 0;
 
+        // Processa cada colaborador e aplica regras visuais de meta e desconto
         data.forEach((emp, index) => {
             let metaVal = (emp.status === 'Férias' || emp.status === 'Gestora' || emp.status === 'Sem Meta') ? 0 : emp.meta;
             totalVendaLoja += emp.venda;
@@ -498,13 +522,14 @@
 
             if (metaVal > 0) {
                 if (progresso >= 100) {
-                    progClass = "bg-green";
+                    progClass = "bg-green";   // Verde quando bate 100% ou mais
                     faltaClass = "bg-green";
                 } else if (progresso >= 84) {
-                    progClass = "bg-yellow";
+                    progClass = "bg-yellow";  // Amarelo quando está perto
                 }
             }
 
+            // Vermelho se o desconto for 0.04% ou superior
             let descClass = Math.round(emp.desconto * 100) >= 4 ? "bg-red" : "";
 
             let statusClass = "status-ativo";
@@ -535,6 +560,7 @@
             tbody.appendChild(row);
         });
 
+        // Cálculo do resumo geral da loja
         let faltaLoja = Math.max(0, storeMetaManual - totalVendaLoja);
         let progLoja = storeMetaManual > 0 ? (totalVendaLoja / storeMetaManual) * 100 : 0;
         let mediaDesc = countAtivos > 0 ? somaDesc / countAtivos : 0;
@@ -546,6 +572,7 @@
         document.getElementById("store-desc").innerText = mediaDesc.toFixed(2) + "%";
         document.getElementById("store-ticket").innerText = formatMoney(mediaTicket);
 
+        // Preenche a linha de rodapé com os totais somados
         const tfoot = document.getElementById("table-total");
         tfoot.innerHTML = `
             <td class="text-left">Total</td>
@@ -561,6 +588,9 @@
         `;
     }
 
+    /* ==========================================
+       9. FUNÇÕES DE EXPORTAÇÃO (JPG / PDF)
+       ================================---------- */
     function exportJPG() {
         document.getElementById("no-print").style.display = "none";
         document.querySelectorAll("button.btn-danger").forEach(el => el.style.display = "none");
