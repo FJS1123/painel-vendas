@@ -3,228 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Vendas - Farmácia</title>
-    <!-- Bibliotecas para leitura de Excel, exportar JPG e PDF -->
+    <title>Controle de Metas - Farmácia</title>
+    <!-- Bibliotecas Firebase, SheetJS, html2canvas e jsPDF -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
-            --primary: #0b5ed7;
-            --success: #198754;
-            --warning: #ffc107;
-            --danger: #dc3545;
-            --bg-color: #f8f9fa;
-            --card-bg: #ffffff;
-            --text-color: #212529;
+            --sj-green: #375623;
+            --sj-header-bg: #385723;
+            --sj-border: #808080;
+            --bg-color: #f4f6f8;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial, sans-serif;
             background-color: var(--bg-color);
-            color: var(--text-color);
+            color: #000;
             margin: 0;
-            padding: 20px;
+            padding: 15px;
         }
 
         .container {
-            max-width: 1300px;
+            max-width: 1400px;
             margin: 0 auto;
+            background: #ffffff;
+            padding: 15px;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 10px;
         }
 
-        h1 {
-            font-size: 1.6rem;
+        h2 {
             margin: 0;
-            color: #0d6efd;
+            color: var(--sj-green);
+            font-size: 1.4rem;
         }
 
         .actions {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: wrap;
-            align-items: center;
         }
 
         button, .file-upload-btn {
-            padding: 8px 14px;
-            border: none;
-            border-radius: 6px;
-            font-weight: 600;
+            padding: 6px 12px;
+            border: 1px solid #7f7f7f;
+            border-radius: 3px;
+            font-weight: bold;
             cursor: pointer;
-            transition: 0.2s;
-            font-size: 0.9rem;
-            display: inline-block;
-        }
-
-        .btn-primary { background-color: #0d6efd; color: white; }
-        .btn-primary:hover { background-color: #0b5ed7; }
-        .btn-success { background-color: #198754; color: white; }
-        .btn-success:hover { background-color: #157347; }
-        .btn-danger { background-color: #dc3545; color: white; }
-        .btn-danger:hover { background-color: #bb2d3b; }
-        .btn-secondary { background-color: #6c757d; color: white; }
-        .btn-secondary:hover { background-color: #5c636a; }
-        .btn-info { background-color: #0dcaf0; color: #000; }
-        .btn-info:hover { background-color: #31d2f2; }
-
-        input[type="file"] {
-            display: none;
-        }
-
-        /* Store KPI Cards */
-        .kpi-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        .kpi-card {
-            background: var(--card-bg);
-            padding: 15px 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            border-left: 5px solid #0d6efd;
-        }
-
-        .kpi-card.success { border-left-color: var(--success); }
-        .kpi-card.warning { border-left-color: var(--warning); }
-
-        .kpi-title {
             font-size: 0.85rem;
-            color: #6c757d;
-            text-transform: uppercase;
-            font-weight: 600;
-            margin-bottom: 5px;
+            background-color: #f2f2f2;
         }
+        button:hover, .file-upload-btn:hover { background-color: #e2e2e2; }
+        .btn-success { background-color: #375623; color: white; border-color: #273e18; }
+        .btn-success:hover { background-color: #273e18; }
+        .btn-danger { background-color: #c00000; color: white; border-color: #900; }
+        .btn-danger:hover { background-color: #900; }
 
-        .kpi-value {
-            font-size: 1.4rem;
-            font-weight: bold;
-        }
+        input[type="file"] { display: none; }
 
-        .kpi-input {
-            width: 100%;
-            font-size: 1.2rem;
-            font-weight: bold;
-            padding: 4px;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-        }
-
-        /* Table Section */
+        /* Tabela Estilo Excel / Planilha Original */
         .table-responsive {
-            background: var(--card-bg);
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             overflow-x: auto;
-            margin-bottom: 25px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            text-align: left;
-            font-size: 0.9rem;
+            text-align: center;
+            font-size: 0.85rem;
         }
 
         th, td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #dee2e6;
+            border: 1px solid #a6a6a6;
+            padding: 6px 8px;
         }
 
         th {
-            background-color: #f1f3f5;
-            color: #495057;
-            font-weight: 600;
-        }
-
-        tr:hover {
-            background-color: #f8f9fa;
-        }
-
-        /* Progress Badges */
-        .badge-progress {
-            padding: 5px 10px;
-            border-radius: 4px;
+            background-color: var(--sj-header-bg);
+            color: white;
             font-weight: bold;
-            display: inline-block;
-        }
-        .bg-yellow { background-color: #fff3cd; color: #856404; }
-        .bg-green { background-color: #d1e7dd; color: #0f5132; }
-        .bg-normal { background-color: #e2e3e5; color: #383d41; }
-
-        /* Editable inputs */
-        input.editable {
-            width: 90px;
-            padding: 4px;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            font-size: 0.9rem;
+            text-transform: uppercase;
+            font-size: 0.75rem;
         }
 
-        select.editable {
-            padding: 4px;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            background: white;
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
         }
 
-        .footer-note {
-            font-size: 0.8rem;
-            color: #6c757d;
+        /* Alinhamentos */
+        .text-left { text-align: left; }
+        .text-right { text-align: right; }
+
+        /* Status Colors (Igual a imagem) */
+        .status-ativo { background-color: #375623; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
+        .status-gestora { background-color: #595959; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
+        .status-ferias { background-color: #c00000; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
+
+        /* Badges e Destaques */
+        .bg-yellow { background-color: #ffc000; color: black; font-weight: bold; }
+        .bg-red { background-color: #ff0000; color: white; }
+        .bg-gray { color: #7f7f7f; font-style: italic; }
+
+        .editable-input {
+            width: 95%;
+            padding: 3px;
+            border: 1px solid #ccc;
             text-align: center;
-            margin-top: 20px;
+            font-size: 0.85rem;
         }
+        .editable-input.text-left { text-align: left; }
     </style>
 </head>
 <body>
 
 <div class="container" id="capture-area">
     <header>
-        <div>
-            <h1>Painel de Acompanhamento - Portão</h1>
-            <span style="font-size: 0.85rem; color: #6c757d;">Atualizado com os dados da sua pasta</span>
-        </div>
+        <h2 id="titulo-painel">Controle de Metas - OUTUBRO</h2>
         <div class="actions" id="no-print">
-            <label class="file-upload-btn btn-info">
-                📂 Atualizar via Planilha Excel <input type="file" id="excel-file" accept=".xlsx, .xls" onchange="handleExcelImport(event)">
+            <label class="file-upload-btn">
+                📂 Importar Excel <input type="file" id="excel-file" accept=".xlsx, .xls" onchange="handleExcelImport(event)">
             </label>
-            <button class="btn-primary" onclick="addRow()">+ Adicionar</button>
-            <button class="btn-success" onclick="exportPDF()">PDF</button>
-            <button class="btn-secondary" onclick="exportJPG()">JPG</button>
+            <button onclick="addRow()">+ Adicionar</button>
+            <button class="btn-success" onclick="exportPDF()">Exportar PDF</button>
+            <button onclick="exportJPG()">Exportar JPG</button>
         </div>
     </header>
 
-    <!-- KPIs da Loja -->
-    <div class="kpi-container">
-        <div class="kpi-card">
-            <div class="kpi-title">Meta da Loja (Editável)</div>
-            <div class="kpi-value">
-                <input type="number" id="store-meta-input" class="kpi-input" value="450726" onchange="updateStoreMeta(this.value)">
-            </div>
-        </div>
-        <div class="kpi-card success">
-            <div class="kpi-title">Venda Total</div>
-            <div class="kpi-value" id="store-venda">R$ 0,00</div>
-        </div>
-        <div class="kpi-card warning">
-            <div class="kpi-title">Quanto Falta (Loja)</div>
-            <div class="kpi-value" id="store-falta">R$ 0,00</div>
-        </div>
-        <div class="kpi-card" id="store-prog-card">
-            <div class="kpi-title">Progresso da Loja</div>
-            <div class="kpi-value" id="store-prog">0.00%</div>
-        </div>
+    <!-- Tabela de Resumo da Loja -->
+    <div style="margin-bottom: 15px;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Meta da Loja (R$)</th>
+                    <th>Realizado Loja (R$)</th>
+                    <th>Falta para Meta da Loja (R$)</th>
+                    <th>Progresso da Loja (%)</th>
+                    <th>Desc. Balcão Médio (%)</th>
+                    <th>Ticket Médio Geral (R$)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="font-weight: bold; background: #ffffff;">
+                    <td><input type="number" id="store-meta" class="editable-input" value="470000" onchange="updateStoreMeta(this.value)"></td>
+                    <td id="store-realizado">R$ 0,00</td>
+                    <td id="store-falta">R$ 0,00</td>
+                    <td id="store-prog">0,00%</td>
+                    <td id="store-desc">0,00%</td>
+                    <td id="store-ticket">R$ 0,00</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 
     <!-- Tabela de Funcionários -->
@@ -232,208 +172,249 @@
         <table>
             <thead>
                 <tr>
-                    <th>Funcionário</th>
+                    <th>Colaborador</th>
                     <th>Status</th>
                     <th>Meta Individual (R$)</th>
-                    <th>Quanto Vendeu (R$)</th>
+                    <th>Realizado (R$)</th>
                     <th>Quanto Falta (R$)</th>
                     <th>Progresso (%)</th>
-                    <th>Clientes Atendidos</th>
+                    <th>Clientes</th>
                     <th>Desc. Balcão (%)</th>
-                    <th>Ticket Médio (R$)</th>
+                    <th>Ticket</th>
                     <th id="th-acoes">Ações</th>
                 </tr>
             </thead>
             <tbody id="employee-table-body">
-                <!-- Dados carregados via JS -->
+                <!-- Preenchido via JS -->
             </tbody>
+            <tfoot>
+                <tr style="font-weight: bold; background-color: #d9d9d9;" id="table-total">
+                    <!-- Totais -->
+                </tr>
+            </tfoot>
         </table>
     </div>
 </div>
 
-<div class="footer-note">
-    Sistema exclusivo de controle operacional de balcão - Farmácias São João
-</div>
-
 <script>
-    let storeMetaManual = 450726;
+    // Configuração oficial do Firebase obtida do projeto
+    const firebaseConfig = {
+        apiKey: "AIzaSyDBCSa--ECyj7Q1nFw8yVgBZFS-9qE3is",
+        authDomain: "fsj-planilha.firebaseapp.com",
+        databaseURL: "https://fsj-planilha-default-rtdb.firebaseio.com",
+        projectId: "fsj-planilha",
+        storageBucket: "fsj-planilha.appspot.com",
+        messagingSenderId: "744936557439",
+        appId: "1:744936557439:web:3f3d85335b32bb98dba84a",
+        measurementId: "G-XT2XZ3MZVW"
+    };
 
-    let data = [
-        { name: "CATIELE ZAIACZKOSKI", status: "Ativo", meta: 22867, venda: 31961, clientes: 301, desconto: 4.90, ticket: 106 },
-        { name: "AMANDA MOREIRA DORNELES", status: "Ativo", meta: 50000, venda: 24364, clientes: 478, desconto: 2.56, ticket: 51 },
-        { name: "CRISTIANE DOS SANTOS KIRSCH", status: "Ativo", meta: 85000, venda: 55654, clientes: 755, desconto: 3.70, ticket: 74 },
-        { name: "EMILY VITORIA BORBA DOS REIS", status: "Ativo", meta: 45000, venda: 29723, clientes: 703, desconto: 0.85, ticket: 42 },
-        { name: "KÁSSIA RAFAELLA MOUTINHO", status: "Ativo", meta: 85000, venda: 60023, clientes: 831, desconto: 3.99, ticket: 72 },
-        { name: "SILMAR SARTOR DOS PASSOS", status: "Sem Meta", meta: 0, venda: 4415, clientes: 58, desconto: 3.97, ticket: 76 },
-        { name: "STEFANY SOUZA SARMENTO", status: "Ativo", meta: 50000, venda: 25998, clientes: 647, desconto: 0.75, ticket: 40 },
-        { name: "GILBERTO AFONSO DIEDER", status: "Ativo", meta: 35000, venda: 31992, clientes: 447, desconto: 5.98, ticket: 72 },
-        { name: "ARIANE LOURENCO CUTHI", status: "Ativo", meta: 22040, venda: 17998, clientes: 212, desconto: 4.35, ticket: 85 },
-        { name: "ROSANE DE FATIMA MOREIRA", status: "Ativo", meta: 50000, venda: 30707, clientes: 563, desconto: 3.16, ticket: 55 },
-        { name: "LEONARDO KRAUSE", status: "Ativo", meta: 85000, venda: 55955, clientes: 704, desconto: 3.60, ticket: 79 }
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let storeMetaManual = 470000;
+    let data = [];
+
+    const defaultData = [
+        { name: "Amanda", status: "Ativo", meta: 50000, venda: 24364, clientes: 478, desconto: 2.56, ticket: 50.97 },
+        { name: "Ariane", status: "Gestora", meta: 0, venda: 17685, clientes: 206, desconto: 4.40, ticket: 85.85 },
+        { name: "Catiele", status: "Gestora", meta: 0, venda: 30434, clientes: 276, desconto: 4.91, ticket: 110.27 },
+        { name: "Cris", status: "Ativo", meta: 85000, venda: 55654, clientes: 755, desconto: 3.70, ticket: 73.71 },
+        { name: "Emily", status: "Ativo", meta: 45000, venda: 27210, clientes: 653, desconto: 0.87, ticket: 41.67 },
+        { name: "Gilberto", status: "Ativo", meta: 35000, venda: 29563, clientes: 405, desconto: 5.89, ticket: 73.00 },
+        { name: "Leonardo", status: "Ativo", meta: 85000, venda: 55955, clientes: 704, desconto: 3.60, ticket: 79.48 },
+        { name: "Leticia", status: "Férias", meta: 0, venda: 4415, clientes: 0, desconto: 0.00, ticket: 0.00 },
+        { name: "Rafaella", status: "Ativo", meta: 85000, venda: 57453, clientes: 788, desconto: 4.06, ticket: 72.91 },
+        { name: "Rosane", status: "Ativo", meta: 50000, venda: 29472, clientes: 537, desconto: 3.21, ticket: 54.88 },
+        { name: "Stefany", status: "Ativo", meta: 50000, venda: 25998, clientes: 647, desconto: 0.75, ticket: 40.18 }
     ];
 
+    // Sincronizar dados em tempo real com o Firebase
+    db.ref('painel_farmacia').on('value', (snapshot) => {
+        const val = snapshot.val();
+        if (val) {
+            data = val.funcionarios || defaultData;
+            storeMetaManual = val.metaLoja !== undefined ? val.metaLoja : 470000;
+        } else {
+            data = defaultData;
+            storeMetaManual = 470000;
+            saveToFirebase();
+        }
+        renderTable();
+    });
+
+    function saveToFirebase() {
+        db.ref('painel_farmacia').set({
+            funcionarios: data,
+            metaLoja: storeMetaManual
+        });
+    }
+
     function formatMoney(val) {
-        return "R$ " + val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return "R$ " + (val || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     function updateStoreMeta(val) {
         storeMetaManual = parseFloat(val) || 0;
-        renderTable();
+        saveToFirebase();
+    }
+
+    function updateData(index, field, value) {
+        data[index][field] = value;
+        saveToFirebase();
+    }
+
+    function addRow() {
+        data.push({ name: "NOVO", status: "Ativo", meta: 30000, venda: 0, clientes: 0, desconto: 0.0, ticket: 0 });
+        saveToFirebase();
+    }
+
+    function removeRow(index) {
+        if(confirm("Deseja remover este funcionário?")) {
+            data.splice(index, 1);
+            saveToFirebase();
+        }
     }
 
     function handleExcelImport(e) {
         const file = e.target.files[0];
         if (!file) return;
-
         const reader = new FileReader();
         reader.onload = function(e) {
-            try {
-                const dataBytes = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(dataBytes, { type: 'array' });
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-                let parsedData = [];
-                for (let i = 1; i < json.length; i++) {
-                    let row = json[i];
-                    let nomeFunc = row[2] || row[1];
-                    if (nomeFunc && typeof nomeFunc === 'string' && !nomeFunc.includes("PORTAO")) {
-                        let vendaVal = parseFloat(String(row[4] || 0).replace(/[^\d,.-]/g, '').replace(',', '.')) || 0;
-                        let metaVal = parseFloat(String(row[5] || 0).replace(/[^\d,.-]/g, '').replace(',', '.')) || 0;
-                        let descVal = parseFloat(String(row[7] || 0).replace(/[^\d,.-]/g, '').replace(',', '.')) || 0;
-                        let tktVal = parseFloat(String(row[8] || 0).replace(/[^\d,.-]/g, '').replace(',', '.')) || 0;
-                        let cliVal = parseInt(String(row[11] || 0).replace(/[^\d]/g, '')) || 0;
-
-                        parsedData.push({
-                            name: nomeFunc.trim(),
-                            status: metaVal === 0 ? "Sem Meta" : "Ativo",
-                            meta: metaVal,
-                            venda: vendaVal,
-                            clientes: cliVal,
-                            desconto: descVal,
-                            ticket: tktVal
-                        });
-                    }
+            const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+            const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+            let parsed = [];
+            for (let i = 1; i < json.length; i++) {
+                let row = json[i];
+                let nome = row[2] || row[1];
+                if (nome && typeof nome === 'string' && !nome.includes("PORTAO") && !nome.includes("Total")) {
+                    parsed.push({
+                        name: nome.trim(),
+                        status: "Ativo",
+                        meta: parseFloat(row[5]) || 30000,
+                        venda: parseFloat(row[4]) || 0,
+                        clientes: parseInt(row[11]) || 0,
+                        desconto: parseFloat(row[7]) || 0,
+                        ticket: parseFloat(row[8]) || 0
+                    });
                 }
-
-                if (parsedData.length > 0) {
-                    data = parsedData;
-                    alert("Planilha atualizada com sucesso!");
-                    renderTable();
-                } else {
-                    alert("Não foi possível ler os registros automaticamente.");
-                }
-            } catch (err) {
-                console.error(err);
-                alert("Erro ao processar o arquivo Excel.");
+            }
+            if (parsed.length > 0) {
+                data = parsed;
+                saveToFirebase();
+                alert("Planilha importada com sucesso para a nuvem!");
             }
         };
         reader.readAsArrayBuffer(file);
     }
 
     function renderTable() {
+        document.getElementById("store-meta").value = storeMetaManual;
         const tbody = document.getElementById("employee-table-body");
         tbody.innerHTML = "";
 
         let totalVendaLoja = 0;
+        let totalClientes = 0;
+        let somaDesc = 0;
+        let somaTicket = 0;
+        let countAtivos = 0;
 
         data.forEach((emp, index) => {
-            let metaVal = emp.status === 'Férias' || emp.status === 'Sem Meta' ? 0 : emp.meta;
+            let metaVal = emp.status === 'Férias' || emp.status === 'Gestora' ? 0 : emp.meta;
             totalVendaLoja += emp.venda;
+            totalClientes += emp.clientes;
+            somaDesc += emp.desconto;
+            somaTicket += emp.ticket;
+            countAtivos++;
 
             let falta = metaVal > 0 ? Math.max(0, metaVal - emp.venda) : 0;
             let progresso = metaVal > 0 ? (emp.venda / metaVal) * 100 : 0;
 
-            let badgeClass = "badge-progress bg-normal";
+            let progClass = "";
+            let faltaText = metaVal > 0 ? formatMoney(falta) : '<span class="bg-gray">R$ 0,00</span>';
+
             if (metaVal > 0) {
-                if (progresso >= 100) {
-                    badgeClass = "badge-progress bg-green";
-                } else if (progresso >= 80) {
-                    badgeClass = "badge-progress bg-yellow";
-                }
+                if (progresso >= 100) progClass = "";
+                else if (progresso >= 84) progClass = "bg-yellow";
             }
+
+            let descClass = emp.desconto > 4 ? "bg-red" : "";
 
             let row = document.createElement("tr");
             row.innerHTML = `
-                <td><input type="text" class="editable" value="${emp.name}" onchange="updateData(${index}, 'name', this.value)" style="width: 180px;"></td>
+                <td class="text-left"><input type="text" class="editable-input text-left" value="${emp.name}" onchange="updateData(${index}, 'name', this.value)"></td>
                 <td>
-                    <select class="editable" onchange="updateData(${index}, 'status', this.value)">
+                    <select class="${emp.status === 'Ativo' ? 'status-ativo' : (emp.status === 'Gestora' ? 'status-gestora' : 'status-ferias')}" onchange="updateData(${index}, 'status', this.value)">
                         <option value="Ativo" ${emp.status === 'Ativo' ? 'selected' : ''}>Ativo</option>
+                        <option value="Gestora" ${emp.status === 'Gestora' ? 'selected' : ''}>Gestora</option>
                         <option value="Férias" ${emp.status === 'Férias' ? 'selected' : ''}>Férias</option>
-                        <option value="Sem Meta" ${emp.status === 'Sem Meta' ? 'selected' : ''}>Sem Meta</option>
                     </select>
                 </td>
-                <td><input type="number" class="editable" value="${emp.meta}" onchange="updateData(${index}, 'meta', parseFloat(this.value))"></td>
-                <td>${formatMoney(emp.venda)}</td>
-                <td>${metaVal > 0 ? formatMoney(falta) : 'N/A'}</td>
-                <td><span class="${badgeClass}">${progresso.toFixed(2)}%</span></td>
+                <td><input type="number" class="editable-input text-right" value="${emp.meta}" onchange="updateData(${index}, 'meta', parseFloat(this.value))"></td>
+                <td class="text-right">${formatMoney(emp.venda)}</td>
+                <td class="text-right">${faltaText}</td>
+                <td class="${progClass}">${progresso.toFixed(2)}%</td>
                 <td>${emp.clientes}</td>
-                <td>${emp.desconto.toFixed(2)}%</td>
-                <td>${formatMoney(emp.ticket)}</td>
-                <td><button class="btn-danger" style="padding: 4px 8px; font-size: 0.8rem;" onclick="removeRow(${index})">Excluir</button></td>
+                <td class="${descClass}">${emp.desconto.toFixed(2)}%</td>
+                <td class="text-right">${formatMoney(emp.ticket)}</td>
+                <td><button class="btn-danger" style="padding: 2px 6px; font-size: 0.75rem;" onclick="removeRow(${index})">X</button></td>
             `;
             tbody.appendChild(row);
         });
 
         let faltaLoja = Math.max(0, storeMetaManual - totalVendaLoja);
         let progLoja = storeMetaManual > 0 ? (totalVendaLoja / storeMetaManual) * 100 : 0;
+        let mediaDesc = countAtivos > 0 ? somaDesc / countAtivos : 0;
+        let mediaTicket = countAtivos > 0 ? somaTicket / countAtivos : 0;
 
-        document.getElementById("store-venda").innerText = formatMoney(totalVendaLoja);
+        document.getElementById("store-realizado").innerText = formatMoney(totalVendaLoja);
         document.getElementById("store-falta").innerText = formatMoney(faltaLoja);
         document.getElementById("store-prog").innerText = progLoja.toFixed(2) + "%";
+        document.getElementById("store-desc").innerText = mediaDesc.toFixed(2) + "%";
+        document.getElementById("store-ticket").innerText = formatMoney(mediaTicket);
 
-        let storeCard = document.getElementById("store-prog-card");
-        storeCard.className = "kpi-card " + (progLoja >= 100 ? "success" : (progLoja >= 80 ? "warning" : ""));
-    }
-
-    function updateData(index, field, value) {
-        data[index][field] = value;
-        renderTable();
-    }
-
-    function addRow() {
-        data.push({ name: "NOVO FUNCIONÁRIO", status: "Ativo", meta: 30000, venda: 0, clientes: 0, desconto: 0.0, ticket: 0 });
-        renderTable();
-    }
-
-    function removeRow(index) {
-        if(confirm("Deseja realmente remover este funcionário?")) {
-            data.splice(index, 1);
-            renderTable();
-        }
+        const tfoot = document.getElementById("table-total");
+        tfoot.innerHTML = `
+            <td class="text-left">Total</td>
+            <td>-</td>
+            <td class="text-right">${formatMoney(data.reduce((acc, curr) => acc + (curr.status==='Ativo'?curr.meta:0), 0))}</td>
+            <td class="text-right">${formatMoney(totalVendaLoja)}</td>
+            <td class="text-right">${formatMoney(Math.max(0, storeMetaManual - totalVendaLoja))}</td>
+            <td>${progLoja.toFixed(2)}%</td>
+            <td>${totalClientes}</td>
+            <td>${mediaDesc.toFixed(2)}%</td>
+            <td class="text-right">${formatMoney(mediaTicket)}</td>
+            <td>-</td>
+        `;
     }
 
     function exportJPG() {
-        const noPrint = document.getElementById("no-print");
-        noPrint.style.display = "none";
+        document.getElementById("no-print").style.display = "none";
+        document.querySelectorAll("button.btn-danger").forEach(el => el.style.display = "none");
         html2canvas(document.getElementById("capture-area"), { scale: 2 }).then(canvas => {
-            noPrint.style.display = "flex";
+            document.getElementById("no-print").style.display = "flex";
+            document.querySelectorAll("button.btn-danger").forEach(el => el.style.display = "inline-block");
             let link = document.createElement('a');
-            link.download = 'painel-vendas-farmacia.jpg';
+            link.download = 'controle-metas.jpg';
             link.href = canvas.toDataURL('image/jpeg', 0.9);
             link.click();
         });
     }
 
     function exportPDF() {
-        const noPrint = document.getElementById("no-print");
-        noPrint.style.display = "none";
+        document.getElementById("no-print").style.display = "none";
+        document.querySelectorAll("button.btn-danger").forEach(el => el.style.display = "none");
         html2canvas(document.getElementById("capture-area"), { scale: 2 }).then(canvas => {
-            noPrint.style.display = "flex";
+            document.getElementById("no-print").style.display = "flex";
+            document.querySelectorAll("button.btn-danger").forEach(el => el.style.display = "inline-block");
             const imgData = canvas.toDataURL('image/png');
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF('landscape', 'mm', 'a4');
-            const imgWidth = 280;
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-            let position = 10;
-
-            pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-            pdf.save('painel-vendas-farmacia.pdf');
+            pdf.addImage(imgData, 'PNG', 10, 10, 280, (canvas.height * 280) / canvas.width);
+            pdf.save('controle-metas.pdf');
         });
     }
-
-    window.onload = renderTable;
 </script>
 
 </body>
