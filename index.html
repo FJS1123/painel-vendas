@@ -171,7 +171,7 @@
             </thead>
             <tbody>
                 <tr style="font-weight: bold; background: #ffffff;">
-                    <td><input type="text" id="store-meta" class="editable-input text-right" value="R$ 470.000,00" onfocus="unformatStoreMeta(this)" onblur="formatStoreMetaInput(this)" onchange="updateStoreMeta(this.value)"></td>
+                    <td><input type="number" id="store-meta" class="editable-input text-right" value="470000" onchange="updateStoreMeta(this.value)"></td>
                     <td id="store-realizado" class="text-right">R$ 0,00</td>
                     <td id="store-falta" class="text-right">R$ 0,00</td>
                     <td id="store-prog">0,00%</td>
@@ -231,17 +231,18 @@
     let data = [];
 
     const defaultData = [
-        { name: "Amanda", status: "Ativo", meta: 50000, venda: 24364, clientes: 478, desconto: 2.56, ticket: 50.97 },
-        { name: "Ariane", status: "Gestora", meta: 0, venda: 17685, clientes: 206, desconto: 4.40, ticket: 85.85 },
-        { name: "Catiele", status: "Gestora", meta: 0, venda: 30434, clientes: 276, desconto: 4.91, ticket: 110.27 },
-        { name: "Cris", status: "Ativo", meta: 85000, venda: 55654, clientes: 755, desconto: 3.70, ticket: 73.71 },
-        { name: "Emily", status: "Ativo", meta: 45000, venda: 27210, clientes: 653, desconto: 0.87, ticket: 41.67 },
-        { name: "Gilberto", status: "Ativo", meta: 35000, venda: 29563, clientes: 405, desconto: 5.89, ticket: 73.00 },
-        { name: "Leonardo", status: "Ativo", meta: 85000, venda: 55955, clientes: 704, desconto: 3.60, ticket: 79.48 },
-        { name: "Leticia", status: "Férias", meta: 0, venda: 4415, clientes: 0, desconto: 0.00, ticket: 0.00 },
-        { name: "Rafaella", status: "Ativo", meta: 85000, venda: 57453, clientes: 788, desconto: 4.06, ticket: 72.91 },
-        { name: "Rosane", status: "Ativo", meta: 50000, venda: 29472, clientes: 537, desconto: 3.21, ticket: 54.88 },
-        { name: "Stefany", status: "Ativo", meta: 50000, venda: 25998, clientes: 647, desconto: 0.75, ticket: 40.18 }
+        { name: "1123", status: "Ativo", meta: 450726, venda: 368791, clientes: 5699, desconto: 3.57, ticket: 65 },
+        { name: "AMANDA MOREIRA DORNELES", status: "Ativo", meta: 50000, venda: 24364, clientes: 478, desconto: 2.56, ticket: 51 },
+        { name: "ARIANE LOURENCO CUTHI", status: "Sem Meta", meta: 22040, venda: 17998, clientes: 212, desconto: 4.35, ticket: 85 },
+        { name: "CATIELE ZAIACZKOSKI", status: "Sem Meta", meta: 22867, venda: 31961, clientes: 301, desconto: 4.90, ticket: 106 },
+        { name: "CRISTIANE DOS SANTOS KIRSCH", status: "Ativo", meta: 85000, venda: 55654, clientes: 755, desconto: 3.70, ticket: 74 },
+        { name: "EMILY VITORIA BORBA DOS REIS", status: "Ativo", meta: 45000, venda: 29723, clientes: 703, desconto: 0.85, ticket: 42 },
+        { name: "GILBERTO AFONSO DIEDER", status: "Ativo", meta: 35000, venda: 31992, clientes: 447, desconto: 5.98, ticket: 72 },
+        { name: "KÁSSIA RAFAELLA MOUTINHO", status: "Ativo", meta: 85000, venda: 60023, clientes: 831, desconto: 3.99, ticket: 72 },
+        { name: "LEONARDO KRAUSE", status: "Ativo", meta: 85000, venda: 55955, clientes: 704, desconto: 3.60, ticket: 79 },
+        { name: "ROSANE DE FATIMA MOREIRA DORNELES", status: "Ativo", meta: 50000, venda: 30707, clientes: 563, desconto: 3.16, ticket: 55 },
+        { name: "SILMAR SARTOR DOS PASSOS", status: "Ativo", meta: 30000, venda: 4415, clientes: 58, desconto: 3.97, ticket: 76 },
+        { name: "STEFANY SOUZA SARMENTO", status: "Ativo", meta: 50000, venda: 25998, clientes: 647, desconto: 0.75, ticket: 40 }
     ];
 
     db.ref('painel_farmacia').on('value', (snapshot) => {
@@ -282,20 +283,8 @@
         return "R$ " + (val || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
-    function formatStoreMetaInput(input) {
-        let val = parseFloat(input.value.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
-        storeMetaManual = val;
-        input.value = formatMoney(val);
-        saveToFirebase();
-    }
-
-    function unformatStoreMeta(input) {
-        input.value = storeMetaManual;
-    }
-
     function updateStoreMeta(val) {
-        let cleanVal = parseFloat(val.toString().replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
-        storeMetaManual = cleanVal;
+        storeMetaManual = parseFloat(val) || 0;
         saveToFirebase();
     }
 
@@ -354,8 +343,9 @@
             const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
             const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-            let parsed = [];
             
+            let importedMap = new Map();
+
             for (let i = 1; i < json.length; i++) {
                 let row = json[i];
                 let nome = row[2] || row[0];
@@ -367,15 +357,11 @@
                     }
 
                     let vendaVal = cleanNumber(row[4]);
-                    let metaVal = cleanNumber(row[5]);
                     let descVal = cleanNumber(row[7]);
                     let ticketVal = cleanNumber(row[8]);
                     let clientesVal = parseInt(row[11]) || 0;
 
-                    parsed.push({
-                        name: nome,
-                        status: "Ativo",
-                        meta: metaVal > 0 ? metaVal : 30000,
+                    importedMap.set(nome.toUpperCase(), {
                         venda: vendaVal,
                         clientes: clientesVal,
                         desconto: descVal,
@@ -384,12 +370,40 @@
                 }
             }
 
-            if (parsed.length > 0) {
-                data = parsed;
+            let updatedCount = 0;
+            data.forEach(emp => {
+                let key = emp.name.toUpperCase();
+                if (importedMap.has(key)) {
+                    let imp = importedMap.get(key);
+                    emp.venda = imp.venda;
+                    emp.clientes = imp.clientes;
+                    emp.desconto = imp.desconto;
+                    emp.ticket = imp.ticket;
+                    updatedCount++;
+                }
+            });
+
+            importedMap.forEach((imp, nameKey) => {
+                let exists = data.some(emp => emp.name.toUpperCase() === nameKey);
+                if (!exists) {
+                    data.push({
+                        name: nameKey,
+                        status: "Ativo",
+                        meta: 30000,
+                        venda: imp.venda,
+                        clientes: imp.clientes,
+                        desconto: imp.desconto,
+                        ticket: imp.ticket
+                    });
+                    updatedCount++;
+                }
+            });
+
+            if (updatedCount > 0) {
                 saveToFirebase();
-                alert("Planilha importada, organizada em ordem alfabética e atualizada com sucesso!");
+                alert("Planilha importada com sucesso! Metas individuais e status foram preservados.");
             } else {
-                alert("Não foi possível ler os dados do arquivo. Verifique se o formato está correto.");
+                alert("Nenhum colaborador correspondente foi encontrado na planilha.");
             }
         };
         reader.readAsArrayBuffer(file);
@@ -397,7 +411,7 @@
 
     function renderTable() {
         document.getElementById("titulo-painel").value = panelTitle;
-        document.getElementById("store-meta").value = formatMoney(storeMetaManual);
+        document.getElementById("store-meta").value = storeMetaManual;
         const tbody = document.getElementById("employee-table-body");
         tbody.innerHTML = "";
 
