@@ -4,30 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Metas - Farmácia</title>
-    
-    <!-- ==========================================
-       IMPORTAÇÃO DE BIBLIOTECAS EXTERNAS
-       - Firebase: Banco de dados em tempo real
-       - SheetJS (XLSX): Leitura e parsing de arquivos Excel
-       - html2canvas & jsPDF: Motores para exportação de imagem/PDF
-       ========================================== -->
+    <!-- Bibliotecas Firebase, SheetJS, html2canvas e jsPDF -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    
     <style>
-        /* ==========================================
-           VARIÁVEIS DE CORES E CONFIGURAÇÕES GLOBAIS
-           Definição da identidade visual
-           ========================================== */
         :root {
             --sj-blue: #2E3192;
             --sj-red: #ED1C24;
             --sj-green: #375623;
             --sj-header-bg: #2E3192;
-            --sj-border: #b0b0b0;
+            --sj-border: #808080;
             --bg-color: #f4f6f8;
         }
 
@@ -39,24 +28,20 @@
             padding: 15px;
         }
 
-        /* ==========================================
-           ESTILOS DO CONTAINER PRINCIPAL E CABEÇALHO
-           ========================================== */
         .container {
             max-width: 1400px;
             margin: 0 auto;
             background: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #d1d5db;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            padding: 15px;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             flex-wrap: wrap;
             gap: 10px;
         }
@@ -67,16 +52,14 @@
             gap: 12px;
         }
 
-        /* Título do painel editável diretamente na tela */
         .editable-title {
             color: var(--sj-blue);
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: bold;
             border: 1px dashed transparent;
-            padding: 2px 8px;
+            padding: 2px 6px;
             background: transparent;
             width: auto;
-            border-radius: 4px;
         }
         .editable-title:hover {
             border-color: #a6a6a6;
@@ -94,16 +77,14 @@
             flex-wrap: wrap;
         }
 
-        /* Botões de controle */
         button, .file-upload-btn {
-            padding: 7px 14px;
+            padding: 6px 12px;
             border: 1px solid #7f7f7f;
-            border-radius: 4px;
+            border-radius: 3px;
             font-weight: bold;
             cursor: pointer;
             font-size: 0.85rem;
             background-color: #f2f2f2;
-            transition: background 0.2s;
         }
         button:hover, .file-upload-btn:hover { background-color: #e2e2e2; }
         .btn-success { background-color: var(--sj-green); color: white; border-color: #273e18; }
@@ -113,22 +94,9 @@
 
         input[type="file"] { display: none; }
 
-        /* ==========================================
-           ESTILOS DO RESUMO DA LOJA E TABELAS
-           ========================================== */
-        .store-summary-box {
-            margin-bottom: 20px;
-            background: #f8fafc;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            padding: 2px;
-            overflow: hidden;
-        }
-
+        /* Tabela Estilo Excel / Planilha Original */
         .table-responsive {
             overflow-x: auto;
-            border-radius: 6px;
-            border: 1px solid var(--sj-border);
         }
 
         table {
@@ -139,8 +107,8 @@
         }
 
         th, td {
-            border: 1px solid var(--sj-border);
-            padding: 8px 10px;
+            border: 1px solid #a6a6a6;
+            padding: 6px 8px;
         }
 
         th {
@@ -149,60 +117,53 @@
             font-weight: bold;
             text-transform: uppercase;
             font-size: 0.75rem;
-            letter-spacing: 0.5px;
         }
 
         tr:nth-child(even) {
-            background-color: #fcfcfc;
+            background-color: #f9f9f9;
         }
 
-        /* Larguras específicas para colunas essenciais */
+        /* Coluna Colaborador mais larga para caber nomes completos */
         th:first-child, td:first-child {
-            width: 290px;
-            min-width: 290px;
-        }
-        th:nth-last-child(2), td:nth-last-child(2) {
-            min-width: 95px;
+            width: 280px;
+            min-width: 280px;
         }
 
+        /* Alinhamentos */
         .text-left { text-align: left; }
         .text-right { text-align: right; }
 
-        /* Cores aplicadas aos selects de Status de cada colaborador */
-        .status-ativo { background-color: var(--sj-green); color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; display: inline-block; text-align: center; }
-        .status-gestora { background-color: #595959; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; display: inline-block; text-align: center; }
-        .status-ferias { background-color: var(--sj-red); color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; display: inline-block; text-align: center; }
-        .status-sem-meta { background-color: #7f7f7f; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; display: inline-block; text-align: center; }
+        /* Status Colors */
+        .status-ativo { background-color: var(--sj-green); color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
+        .status-gestora { background-color: #595959; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
+        .status-ferias { background-color: var(--sj-red); color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
+        .status-sem-meta { background-color: #7f7f7f; color: white; font-weight: bold; border: none; padding: 4px; border-radius: 3px; width: 100%; }
 
-        /* Classes condicionais de destaque visual */
+        /* Badges e Destaques */
         .bg-yellow { background-color: #ffc000; color: black; font-weight: bold; }
-        .bg-green { background-color: var(--sj-green); color: white; font-weight: bold; }
         .bg-red { background-color: var(--sj-red); color: white; font-weight: bold; }
         .bg-gray { color: #7f7f7f; font-style: italic; }
 
-        /* Campos editáveis dentro das linhas da tabela */
         .editable-input {
             width: 96%;
-            padding: 5px;
-            border: 1px solid #cbd5e1;
-            border-radius: 3px;
+            padding: 4px;
+            border: 1px solid #ccc;
             text-align: center;
             font-size: 0.85rem;
-            background: #fff;
         }
-        .editable-input:focus {
-            border-color: var(--sj-blue);
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(46, 49, 146, 0.1);
+        .editable-input.text-left { 
+            text-align: left; 
+            width: 98%;
+            box-sizing: border-box;
         }
-        .editable-input.text-left { text-align: left; width: 98%; box-sizing: border-box; }
         .editable-input.text-right { text-align: right; }
 
+        /* Rodapé */
         footer {
             text-align: center;
-            margin-top: 20px;
+            margin-top: 15px;
             font-size: 0.8rem;
-            color: #64748b;
+            color: #666;
             font-weight: bold;
         }
     </style>
@@ -212,11 +173,9 @@
 <div class="container" id="capture-area">
     <header>
         <div class="brand-area">
-            <!-- Título do painel interativo -->
             <input type="text" id="titulo-painel" class="editable-title" value="METAS - OUTUBRO" onchange="updateTitle(this.value)">
         </div>
         <div class="actions" id="no-print">
-            <!-- Botão com input oculto para carregar o arquivo Excel -->
             <label class="file-upload-btn">
                 📂 Importar Excel <input type="file" id="excel-file" accept=".xlsx, .xls" onchange="handleExcelImport(event)">
             </label>
@@ -226,8 +185,8 @@
         </div>
     </header>
 
-    <!-- Bloco com os indicadores consolidados da Loja -->
-    <div class="store-summary-box">
+    <!-- Tabela de Resumo da Loja -->
+    <div style="margin-bottom: 15px;">
         <table>
             <thead>
                 <tr>
@@ -252,7 +211,7 @@
         </table>
     </div>
 
-    <!-- Tabela individual de desempenho dos funcionários -->
+    <!-- Tabela de Funcionários -->
     <div class="table-responsive">
         <table>
             <thead>
@@ -270,11 +229,11 @@
                 </tr>
             </thead>
             <tbody id="employee-table-body">
-                <!-- Conteúdo gerado dinamicamente via JavaScript -->
+                <!-- Preenchido via JS -->
             </tbody>
             <tfoot>
-                <tr style="font-weight: bold; background-color: #e2e8f0;" id="table-total">
-                    <!-- Linha somatória total -->
+                <tr style="font-weight: bold; background-color: #d9d9d9;" id="table-total">
+                    <!-- Totais -->
                 </tr>
             </tfoot>
         </table>
@@ -286,9 +245,6 @@
 </div>
 
 <script>
-    /* ==========================================
-       CONEXÃO COM O FIREBASE (Realtime Database)
-       ========================================== */
     const firebaseConfig = {
         apiKey: "AIzaSyDBCSa--ECyj7Q1nFw8yVgBZFS-9qE3is",
         authDomain: "fsj-planilha.firebaseapp.com",
@@ -307,7 +263,6 @@
     let panelTitle = "METAS - OUTUBRO";
     let data = [];
 
-    // Lista padrão de funcionários caso o banco online esteja vazio
     const defaultData = [
         { name: "AMANDA MOREIRA DORNELES", status: "Ativo", meta: 50000, venda: 24364, clientes: 478, desconto: 2.56, ticket: 51 },
         { name: "ARIANE LOURENCO CUTHI", status: "Ativo", meta: 22040, venda: 17998, clientes: 212, desconto: 4.35, ticket: 85 },
@@ -322,10 +277,6 @@
         { name: "STEFANY SOUZA SARMENTO", status: "Ativo", meta: 50000, venda: 25998, clientes: 647, desconto: 0.75, ticket: 40 }
     ];
 
-    /* ==========================================
-       SINCRONIZAÇÃO EM TEMPO REAL
-       Ouve alterações no banco de dados e atualiza a tela automaticamente
-       ========================================== */
     db.ref('painel_farmacia').on('value', (snapshot) => {
         const val = snapshot.val();
         if (val) {
@@ -342,12 +293,10 @@
         renderTable();
     });
 
-    // Ordena alfabeticamente por nome do colaborador
     function sortData() {
         data.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' }));
     }
 
-    // Salva todas as alterações estruturais no Firebase
     function saveToFirebase() {
         sortData();
         db.ref('painel_farmacia').set({
@@ -357,9 +306,6 @@
         });
     }
 
-    /* ==========================================
-       FUNÇÕES DE FORMATAÇÃO E MANIPULAÇÃO DE DADOS
-       ========================================== */
     function updateTitle(val) {
         panelTitle = val;
         saveToFirebase();
@@ -382,14 +328,20 @@
         saveToFirebase();
     }
 
-    function unformatMetaInput(input, index) { input.value = data[index].meta; }
+    function unformatMetaInput(input, index) {
+        input.value = data[index].meta;
+    }
+
     function formatMetaInput(input, index) {
         let val = parseFloat(input.value.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
         data[index].meta = val;
         saveToFirebase();
     }
 
-    function unformatVendaInput(input, index) { input.value = data[index].venda; }
+    function unformatVendaInput(input, index) {
+        input.value = data[index].venda;
+    }
+
     function formatVendaInput(input, index) {
         let val = parseFloat(input.value.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
         data[index].venda = val;
@@ -415,10 +367,6 @@
         return parseFloat(str) || 0;
     }
 
-    /* ==========================================
-       IMPORTAÇÃO INTELIGENTE DE EXCEL
-       Lê o arquivo, ignora linhas gerais e atualiza métricas
-       ========================================== */
     function handleExcelImport(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -495,9 +443,6 @@
         reader.readAsArrayBuffer(file);
     }
 
-    /* ==========================================
-       RENDERIZAÇÃO DA TABELA E REGRAS CONDICIONAIS
-       ========================================== */
     function renderTable() {
         document.getElementById("titulo-painel").value = panelTitle;
         document.getElementById("store-meta").value = storeMetaManual;
@@ -522,16 +467,11 @@
             let progresso = metaVal > 0 ? (emp.venda / metaVal) * 100 : 0;
 
             let progClass = "";
-            let faltaClass = "";
             let faltaText = metaVal > 0 ? formatMoney(falta) : '<span class="bg-gray">R$ 0,00</span>';
 
             if (metaVal > 0) {
-                if (progresso >= 100) {
-                    progClass = "bg-green";
-                    faltaClass = "bg-green";
-                } else if (progresso >= 84) {
-                    progClass = "bg-yellow";
-                }
+                if (progresso >= 100) progClass = "";
+                else if (progresso >= 84) progClass = "bg-yellow";
             }
 
             let descClass = Math.round(emp.desconto * 100) >= 4 ? "bg-red" : "";
@@ -554,11 +494,11 @@
                 </td>
                 <td><input type="text" class="editable-input text-right" value="${formatMoney(emp.meta)}" onfocus="unformatMetaInput(this, ${index})" onblur="formatMetaInput(this, ${index})" onchange="updateData(${index}, 'meta', this.value)"></td>
                 <td><input type="text" class="editable-input text-right" value="${formatMoney(emp.venda)}" onfocus="unformatVendaInput(this, ${index})" onblur="formatVendaInput(this, ${index})" onchange="updateData(${index}, 'venda', this.value)"></td>
-                <td class="text-right ${faltaClass}">${faltaText}</td>
+                <td class="text-right">${faltaText}</td>
                 <td class="${progClass}">${progresso.toFixed(2)}%</td>
                 <td>${emp.clientes}</td>
                 <td class="${descClass}">${emp.desconto.toFixed(2)}%</td>
-                <td class="text-right" style="white-space: nowrap;">${formatMoney(emp.ticket)}</td>
+                <td class="text-right">${formatMoney(emp.ticket)}</td>
                 <td><button class="btn-danger" style="padding: 2px 6px; font-size: 0.75rem;" onclick="removeRow(${index})">X</button></td>
             `;
             tbody.appendChild(row);
@@ -575,7 +515,6 @@
         document.getElementById("store-desc").innerText = mediaDesc.toFixed(2) + "%";
         document.getElementById("store-ticket").innerText = formatMoney(mediaTicket);
 
-        // Preenche a linha de rodapé com os totais gerais (Corrigido o erro de sintaxe do percentual)
         const tfoot = document.getElementById("table-total");
         tfoot.innerHTML = `
             <td class="text-left">Total</td>
@@ -586,86 +525,35 @@
             <td>${progLoja.toFixed(2)}%</td>
             <td>${totalClientes}</td>
             <td>${mediaDesc.toFixed(2)}%</td>
-            <td class="text-right" style="white-space: nowrap;">${formatMoney(mediaTicket)}</td>
+            <td class="text-right">${formatMoney(mediaTicket)}</td>
             <td>-</td>
         `;
     }
 
-    /* ==========================================
-       TRATAMENTO PARA EXPORTAÇÃO LIMPA (JPG / PDF)
-       ========================================== */
-    function prepareForCapture(container) {
-        container.querySelectorAll('input, select').forEach(el => {
-            let span = document.createElement('span');
-            span.className = 'temp-capture-span';
-            if (el.tagName === 'SELECT') {
-                span.innerText = el.options[el.selectedIndex].text;
-                span.className = el.className;
-                span.style.padding = "4px";
-                span.style.borderRadius = "3px";
-                span.style.display = "inline-block";
-            } else {
-                span.innerText = el.value;
-                span.style.fontWeight = "inherit";
-            }
-            el.style.display = 'none';
-            el.parentNode.insertBefore(span, el);
-        });
-    }
-
-    function restoreAfterCapture(container) {
-        container.querySelectorAll('.temp-capture-span').forEach(span => {
-            span.nextElementSibling.style.display = '';
-            span.remove();
-        });
-    }
-
     function exportJPG() {
-        const captureArea = document.getElementById("capture-area");
         document.getElementById("no-print").style.display = "none";
         document.querySelectorAll("button.btn-danger").forEach(el => el.style.display = "none");
-        
-        prepareForCapture(captureArea);
-
-        html2canvas(captureArea, { scale: 2, useCORS: true }).then(canvas => {
-            restoreAfterCapture(captureArea);
+        html2canvas(document.getElementById("capture-area"), { scale: 2 }).then(canvas => {
             document.getElementById("no-print").style.display = "flex";
             document.querySelectorAll("button.btn-danger").forEach(el => el.style.display = "inline-block");
-            
             let link = document.createElement('a');
             link.download = 'controle-metas.jpg';
-            link.href = canvas.toDataURL('image/jpeg', 0.95);
+            link.href = canvas.toDataURL('image/jpeg', 0.9);
             link.click();
-        }).catch(err => {
-            restoreAfterCapture(captureArea);
-            document.getElementById("no-print").style.display = "flex";
-            document.querySelectorAll("button.btn-danger").forEach(el => el.style.display = "inline-block");
-            console.error(err);
         });
     }
 
     function exportPDF() {
-        const captureArea = document.getElementById("capture-area");
         document.getElementById("no-print").style.display = "none";
         document.querySelectorAll("button.btn-danger").forEach(el => el.style.display = "none");
-        
-        prepareForCapture(captureArea);
-
-        html2canvas(captureArea, { scale: 2, useCORS: true }).then(canvas => {
-            restoreAfterCapture(captureArea);
+        html2canvas(document.getElementById("capture-area"), { scale: 2 }).then(canvas => {
             document.getElementById("no-print").style.display = "flex";
             document.querySelectorAll("button.btn-danger").forEach(el => el.style.display = "inline-block");
-            
             const imgData = canvas.toDataURL('image/png');
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF('landscape', 'mm', 'a4');
             pdf.addImage(imgData, 'PNG', 10, 10, 280, (canvas.height * 280) / canvas.width);
             pdf.save('controle-metas.pdf');
-        }).catch(err => {
-            restoreAfterCapture(captureArea);
-            document.getElementById("no-print").style.display = "flex";
-            document.querySelectorAll("button.btn-danger").forEach(el => el.style.display = "inline-block");
-            console.error(err);
         });
     }
 </script>
