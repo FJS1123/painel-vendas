@@ -132,16 +132,22 @@
             border: 1px solid var(--sj-border);
         }
 
+        /* Table layout fixed para forçar o cumprimento estrito das larguras */
         table {
             width: 100%;
             border-collapse: collapse;
             text-align: center;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
+            table-layout: fixed;
         }
 
         th, td {
             border: 1px solid var(--sj-border);
-            padding: 8px 10px;
+            padding: 8px 6px;
+            box-sizing: border-box;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         th {
@@ -149,35 +155,41 @@
             color: white;
             font-weight: bold;
             text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
+            font-size: 0.72rem;
+            letter-spacing: 0.4px;
         }
 
         tr:nth-child(even) {
             background-color: #fcfcfc;
         }
 
-        /* Larguras específicas para colunas */
-        th:first-child, td:first-child {
-            width: 290px;
-            min-width: 290px;
-        }
-        th:nth-last-child(2), td:nth-last-child(2) {
-            min-width: 95px;
-        }
+        /* ==========================================
+           LARGURAS FIXAS E PROPORCIONAIS DAS COLUNAS
+           ========================================== */
+        .col-colaborador { width: 235px; }
+        .col-status      { width: 95px;  }
+        .col-meta        { width: 125px; }
+        .col-venda       { width: 125px; }
+        .col-falta       { width: 125px; }
+        .col-progresso   { width: 105px; }
+        .col-clientes    { width: 85px;  }
+        .col-desconto    { width: 110px; }
+        .col-ticket      { width: 100px; }
+        .col-acoes       { width: 65px;  }
 
         .text-left { text-align: left; }
         .text-right { text-align: right; }
 
         /* Cores aplicadas aos status */
         .status-badge {
-            padding: 5px 8px;
+            padding: 4px 6px;
             border-radius: 4px;
             font-weight: bold;
             color: white;
             display: inline-block;
             width: 90%;
             text-align: center;
+            font-size: 0.78rem;
         }
         .status-ativo { background-color: var(--sj-green); }
         .status-gestora { background-color: #595959; }
@@ -192,20 +204,21 @@
 
         /* Campos editáveis */
         .editable-input {
-            width: 96%;
-            padding: 5px;
+            width: 95%;
+            padding: 4px;
             border: 1px solid #cbd5e1;
             border-radius: 3px;
             text-align: center;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             background: #fff;
+            box-sizing: border-box;
         }
         .editable-input:focus {
             border-color: var(--sj-blue);
             outline: none;
             box-shadow: 0 0 0 2px rgba(46, 49, 146, 0.1);
         }
-        .editable-input.text-left { text-align: left; width: 98%; box-sizing: border-box; }
+        .editable-input.text-left { text-align: left; width: 98%; }
         .editable-input.text-right { text-align: right; }
 
         footer {
@@ -270,16 +283,16 @@
         <table>
             <thead>
                 <tr>
-                    <th>Colaborador</th>
-                    <th>Status</th>
-                    <th>Meta Individual (R$)</th>
-                    <th>Realizado (R$)</th>
-                    <th>Quanto Falta (R$)</th>
-                    <th>Progresso (%)</th>
-                    <th>Clientes</th>
-                    <th>Desc. Balcão (%)</th>
-                    <th>Ticket</th>
-                    <th id="th-acoes" class="edit-only">Ações</th>
+                    <th class="col-colaborador">Colaborador</th>
+                    <th class="col-status">Status</th>
+                    <th class="col-meta">Meta Individual (R$)</th>
+                    <th class="col-venda">Realizado (R$)</th>
+                    <th class="col-falta">Quanto Falta (R$)</th>
+                    <th class="col-progresso">Progresso (%)</th>
+                    <th class="col-clientes">Clientes</th>
+                    <th class="col-desconto">Desc. Balcão (%)</th>
+                    <th class="col-ticket">Ticket</th>
+                    <th id="th-acoes" class="col-acoes edit-only">Ações</th>
                 </tr>
             </thead>
             <tbody id="employee-table-body">
@@ -617,15 +630,15 @@
 
             let row = document.createElement("tr");
             row.innerHTML = `
-                <td class="text-left">${colName}</td>
-                <td>${colStatus}</td>
-                <td class="text-right">${colMeta}</td>
-                <td class="text-right">${colVenda}</td>
-                <td class="text-right ${faltaClass}">${faltaText}</td>
-                <td class="${progClass}">${progresso.toFixed(2)}%</td>
-                <td>${emp.clientes}</td>
-                <td class="${descClass}">${emp.desconto.toFixed(2)}%</td>
-                <td class="text-right" style="white-space: nowrap;">${formatMoney(emp.ticket)}</td>
+                <td class="text-left col-colaborador">${colName}</td>
+                <td class="col-status">${colStatus}</td>
+                <td class="text-right col-meta">${colMeta}</td>
+                <td class="text-right col-venda">${colVenda}</td>
+                <td class="text-right col-falta ${faltaClass}">${faltaText}</td>
+                <td class="col-progresso ${progClass}">${progresso.toFixed(2)}%</td>
+                <td class="col-clientes">${emp.clientes}</td>
+                <td class="col-desconto ${descClass}">${emp.desconto.toFixed(2)}%</td>
+                <td class="text-right col-ticket" style="white-space: nowrap;">${formatMoney(emp.ticket)}</td>
                 ${colAcoes}
             `;
             tbody.appendChild(row);
@@ -644,17 +657,17 @@
         document.getElementById("store-ticket").innerText = formatMoney(mediaTicket);
 
         const tfoot = document.getElementById("table-total");
-        let tfootAcoes = isEditMode ? `<td>-</td>` : ``;
+        let tfootAcoes = isEditMode ? `<td class="col-acoes">-</td>` : ``;
         tfoot.innerHTML = `
-            <td class="text-left">Total</td>
-            <td>-</td>
-            <td class="text-right">${formatMoney(data.reduce((acc, curr) => acc + (curr.status==='Ativo'?curr.meta:0), 0))}</td>
-            <td class="text-right">${formatMoney(totalVendaLoja)}</td>
-            <td class="text-right">${formatMoney(Math.max(0, storeMetaManual - totalVendaLoja))}</td>
-            <td>${progLoja.toFixed(2)}%</td>
-            <td>${totalClientes}</td>
-            <td>${mediaDesc.toFixed(2)}%</td>
-            <td class="text-right" style="white-space: nowrap;">${formatMoney(mediaTicket)}</td>
+            <td class="text-left col-colaborador">Total</td>
+            <td class="col-status">-</td>
+            <td class="text-right col-meta">${formatMoney(data.reduce((acc, curr) => acc + (curr.status==='Ativo'?curr.meta:0), 0))}</td>
+            <td class="text-right col-venda">${formatMoney(totalVendaLoja)}</td>
+            <td class="text-right col-falta">${formatMoney(Math.max(0, storeMetaManual - totalVendaLoja))}</td>
+            <td class="col-progresso">${progLoja.toFixed(2)}%</td>
+            <td class="col-clientes">${totalClientes}</td>
+            <td class="col-desconto">${mediaDesc.toFixed(2)}%</td>
+            <td class="text-right col-ticket" style="white-space: nowrap;">${formatMoney(mediaTicket)}</td>
             ${tfootAcoes}
         `;
     }
@@ -665,66 +678,3 @@
     function exportJPG() {
         const wasEditing = isEditMode;
         if (wasEditing) {
-            isEditMode = false;
-            renderTable();
-        }
-
-        const captureArea = document.getElementById("capture-area");
-        document.getElementById("no-print").style.display = "none";
-
-        html2canvas(captureArea, { scale: 2, useCORS: true }).then(canvas => {
-            document.getElementById("no-print").style.display = "flex";
-            if (wasEditing) {
-                isEditMode = true;
-                renderTable();
-            }
-            
-            let link = document.createElement('a');
-            link.download = 'controle-metas.jpg';
-            link.href = canvas.toDataURL('image/jpeg', 0.95);
-            link.click();
-        }).catch(err => {
-            document.getElementById("no-print").style.display = "flex";
-            if (wasEditing) {
-                isEditMode = true;
-                renderTable();
-            }
-            console.error(err);
-        });
-    }
-
-    function exportPDF() {
-        const wasEditing = isEditMode;
-        if (wasEditing) {
-            isEditMode = false;
-            renderTable();
-        }
-
-        const captureArea = document.getElementById("capture-area");
-        document.getElementById("no-print").style.display = "none";
-
-        html2canvas(captureArea, { scale: 2, useCORS: true }).then(canvas => {
-            document.getElementById("no-print").style.display = "flex";
-            if (wasEditing) {
-                isEditMode = true;
-                renderTable();
-            }
-            
-            const imgData = canvas.toDataURL('image/png');
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF('landscape', 'mm', 'a4');
-            pdf.addImage(imgData, 'PNG', 10, 10, 280, (canvas.height * 280) / canvas.width);
-            pdf.save('controle-metas.pdf');
-        }).catch(err => {
-            document.getElementById("no-print").style.display = "flex";
-            if (wasEditing) {
-                isEditMode = true;
-                renderTable();
-            }
-            console.error(err);
-        });
-    }
-</script>
-
-</body>
-</html>
