@@ -232,6 +232,8 @@
                 📂 Importar Excel <input type="file" id="excel-file" accept=".xlsx, .xls" onchange="handleExcelImport(event)">
             </label>
             <button class="edit-only" onclick="addRow()">+ Adicionar</button>
+            <!-- Botão para limpar toda a tabela para um novo mês -->
+            <button class="btn-danger edit-only" onclick="clearTable()">🗑️ Limpar Tabela</button>
             <button class="btn-success" onclick="exportPDF()">Exportar PDF</button>
             <button class="btn-danger" onclick="exportJPG()">Exportar JPG</button>
         </div>
@@ -292,7 +294,7 @@
     </div>
 
     <footer>
-        Farmácia São João — Filial 1123 (Portão 2) | Desenvolvido por Nick Oliver - 2026
+        Farmácia São João — Filial 1123 (Portão 2) | Desenvolvido por Nick Oliver - v2.1 (2026)
     </footer>
 </div>
 
@@ -379,6 +381,18 @@
             btn.style.backgroundColor = "#2E3192";
         }
         renderTable();
+    }
+
+    /* ==========================================
+       FUNÇÃO PARA LIMPAR TODA A TABELA (NOVO MÊS)
+       ========================================== */
+    function clearTable() {
+        if (confirm("Tem certeza de que deseja limpar toda a tabela e zerar as metas para iniciar um novo mês?")) {
+            data = [];
+            storeMetaManual = 0;
+            panelTitle = "METAS - NOVO MÊS";
+            saveToFirebase();
+        }
     }
 
     /* ==========================================
